@@ -25,36 +25,37 @@ echo "  ║         Arch-X Environment Setup     ║"
 echo "  ╚══════════════════════════════════════╝"
 echo ""
 
-# ─── [1/9] Packages ──────────────────────────────────
+# ─── [1/10] Packages ─────────────────────────────────
 
-step "1/9" "Installing packages..."
+step "1/10" "Installing packages..."
 
 sudo pacman -S --needed --noconfirm \
-    hyprland waybar dunst wofi hyprlock wlogout grim slurp wf-recorder nwg-look \
+    hyprland waybar dunst wofi hyprlock grim slurp wf-recorder nwg-look \
     xdg-desktop-portal-hyprland \
     ghostty zsh zsh-autosuggestions zsh-syntax-highlighting \
-    fzf fd ripgrep eza bat zoxide yazi sshfs lazygit \
+    fzf fd ripgrep eza bat zoxide yazi sshfs lazygit sshs \
     neovim git docker docker-compose \
-    adw-gtk3 ttf-jetbrains-mono-nerd \
+    ttf-jetbrains-mono-nerd \
     pass pass-otp wl-clipboard gnupg pinentry \
     openssh sshpass \
-    firefox
+    firefox \
+    sddm qt6-svg qt6-declarative
 
 # AUR packages (requires yay)
 if command -v yay &>/dev/null; then
-    yay -S --needed --noconfirm sshs
+    yay -S --needed --noconfirm wlogout adw-gtk3
 else
     warn "yay not found — installing yay first..."
     sudo pacman -S --needed --noconfirm base-devel
     git clone https://aur.archlinux.org/yay.git /tmp/yay-install
     (cd /tmp/yay-install && makepkg -si --noconfirm)
     rm -rf /tmp/yay-install
-    yay -S --needed --noconfirm sshs
+    yay -S --needed --noconfirm wlogout adw-gtk3
 fi
 
-# ─── [2/9] Symlink configs ───────────────────────────
+# ─── [2/10] Symlink configs ──────────────────────────
 
-step "2/9" "Linking configuration files..."
+step "2/10" "Linking configuration files..."
 
 mkdir -p "$HOME/.config"
 
@@ -90,9 +91,9 @@ mkdir -p "$HOME/.gnupg" && chmod 700 "$HOME/.gnupg"
 ln -sf "$DOTDIR/gnupg/gpg-agent.conf" "$HOME/.gnupg/gpg-agent.conf"
 info "~/.gnupg/gpg-agent.conf → $DOTDIR/gnupg/gpg-agent.conf"
 
-# ─── [3/9] Default shell ─────────────────────────────
+# ─── [3/10] Default shell ────────────────────────────
 
-step "3/9" "Setting zsh as default shell..."
+step "3/10" "Setting zsh as default shell..."
 
 if [ "$SHELL" != "/usr/bin/zsh" ]; then
     chsh -s /usr/bin/zsh
@@ -101,9 +102,9 @@ else
     info "Already using zsh"
 fi
 
-# ─── [4/9] SSH agent ─────────────────────────────────
+# ─── [4/10] SSH agent ────────────────────────────────
 
-step "4/9" "Enabling SSH agent..."
+step "4/10" "Enabling SSH agent..."
 
 systemctl --user enable --now ssh-agent.socket 2>/dev/null || \
     systemctl --user enable --now ssh-agent 2>/dev/null || \
@@ -113,9 +114,9 @@ systemctl --user enable --now ssh-agent.socket 2>/dev/null || \
 grep -rl "PRIVATE KEY" ~/.ssh/ 2>/dev/null | xargs -r ssh-add 2>/dev/null || true
 info "SSH agent configured"
 
-# ─── [5/9] Docker ────────────────────────────────────
+# ─── [5/10] Docker ───────────────────────────────────
 
-step "5/9" "Enabling Docker..."
+step "5/10" "Enabling Docker..."
 
 sudo systemctl enable --now docker
 if ! groups "$USER" | grep -q docker; then
@@ -125,32 +126,41 @@ else
     info "Already in docker group"
 fi
 
-# ─── [6/9] GTK theme ─────────────────────────────────
+# ─── [6/10] GTK theme ────────────────────────────────
 
-step "6/9" "Applying GTK theme..."
+step "6/10" "Applying GTK theme..."
 
 gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3-dark' 2>/dev/null || \
     warn "gsettings not available — GTK theme will apply from settings.ini on first Hyprland session"
 gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
 info "GTK theme set to adw-gtk3-dark"
 
-# ─── [7/9] Waybar scripts ────────────────────────────
+# ─── [7/10] Waybar scripts ───────────────────────────
 
-step "7/9" "Setting script permissions..."
+step "7/10" "Setting script permissions..."
 
 chmod +x "$DOTDIR/waybar/scripts/"*.sh 2>/dev/null || true
 info "Waybar scripts marked executable"
 
-# ─── [8/9] Neovim plugins ────────────────────────────
+# ─── [8/10] SDDM display manager ─────────────────────
 
-step "8/9" "Installing Neovim plugins..."
+step "8/10" "Setting up SDDM..."
+
+sudo cp -r "$DOTDIR/sddm-theme" /usr/share/sddm/themes/whitebyte
+sudo cp "$DOTDIR/sddm/sddm.conf" /etc/sddm.conf
+sudo systemctl enable sddm
+info "SDDM enabled with whitebyte theme"
+
+# ─── [9/10] Neovim plugins ───────────────────────────
+
+step "9/10" "Installing Neovim plugins..."
 
 nvim --headless "+Lazy! sync" +qa 2>/dev/null || \
     warn "Neovim plugin sync skipped — run 'nvim' to install plugins on first launch"
 
-# ─── [9/9] Summary ───────────────────────────────────
+# ─── [10/10] Summary ─────────────────────────────────
 
-step "9/9" "Setup complete!"
+step "10/10" "Setup complete!"
 
 echo ""
 echo "  ┌──────────────────────────────────────┐"

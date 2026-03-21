@@ -1,0 +1,4 @@
+InputField 1.0 InputField.qml
+ActionButton 1.0 ActionButton.qml
+ClockDisplay 1.0 ClockDisplay.qml
+SessionSelector 1.0 SessionSelector.qml

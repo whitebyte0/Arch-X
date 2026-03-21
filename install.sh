@@ -39,7 +39,7 @@ sudo pacman -S --needed --noconfirm \
     pass pass-otp wl-clipboard gnupg pinentry \
     openssh sshpass \
     firefox \
-    sddm qt6-svg qt6-declarative
+    sddm qt6-svg qt6-declarative qt6-wayland libxcb xcb-util-cursor
 
 # AUR packages (requires yay)
 if command -v yay &>/dev/null; then

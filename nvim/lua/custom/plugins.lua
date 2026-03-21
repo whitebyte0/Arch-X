@@ -1,0 +1,2 @@
+use { 'dougalmiller/golang.nvim' }
+

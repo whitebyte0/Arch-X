@@ -1,0 +1,21 @@
+# ── Defaults ─────────────────────────────────────────
+Host *
+    ServerAliveInterval 15
+    ServerAliveCountMax 720
+    TCPKeepAlive yes
+    AddKeysToAgent yes
+    IdentitiesOnly yes
+    SetEnv TERM=xterm-256color
+
+# ── Hosts ────────────────────────────────────────────
+# Add your hosts here. Format:
+#
+# Host my-server                    # label (what you see in the picker)
+#     HostName 1.2.3.4              # IP or domain
+#     User root                     # SSH user
+#     Port 22                       # optional, default 22
+#     IdentityFile ~/.ssh/my-server # optional, key to use
+#
+# After adding a host, you can connect with:
+#   ssh my-server        (direct)
+#   s                    (interactive fzf picker)

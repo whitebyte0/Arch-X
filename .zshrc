@@ -93,4 +93,10 @@ eval "$(zoxide init zsh)"        # z <partial-dir> to jump
 alias cat='bat --paging=never'   # syntax-highlighted cat
 export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"
-grep -rl "PRIVATE KEY" ~/.ssh/ 2>/dev/null | grep -v '\.pub$' | xargs -r ssh-add 2>/dev/null
+# Auto-load SSH keys without passphrases
+for key in ~/.ssh/*; do
+    [[ -f "$key" ]] || continue
+    [[ "$key" == *.pub || "$key" == */config || "$key" == */known_hosts* || "$key" == */authorized_keys ]] && continue
+    grep -q "PRIVATE KEY" "$key" 2>/dev/null || continue
+    ssh-keygen -y -P "" -f "$key" &>/dev/null && ssh-add "$key" 2>/dev/null
+done

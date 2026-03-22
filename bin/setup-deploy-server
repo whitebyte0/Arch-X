@@ -90,9 +90,26 @@ else
     ssh-keygen -t ed25519 -f "$KEYFILE" -N "" -C "${HOST}-deploy"
 fi
 
-# Push public key to deploy user via root session (no password needed)
-PUBKEY=$(cat "$KEYFILE.pub")
-ssh "${HOST}-root" "echo '$PUBKEY' >> /home/$DEPLOY_USER/.ssh/authorized_keys && chown $DEPLOY_USER:$DEPLOY_USER /home/$DEPLOY_USER/.ssh/authorized_keys && echo 'Key deployed for $DEPLOY_USER'"
+# Push public key to deploy user via root session using scp (avoids shell quoting issues)
+scp -o "StrictHostKeyChecking=no" "${KEYFILE}.pub" "${HOST}-root:/tmp/deploy_key.pub"
+ssh "${HOST}-root" << 'REMOTE_KEY'
+set -e
+DEPLOY_USER="deploy"
+
+# Ensure home dir permissions (sshd StrictModes requires this)
+chmod 755 /home/$DEPLOY_USER
+chown $DEPLOY_USER:$DEPLOY_USER /home/$DEPLOY_USER
+
+# Append key and fix permissions
+cat /tmp/deploy_key.pub >> /home/$DEPLOY_USER/.ssh/authorized_keys
+sort -u -o /home/$DEPLOY_USER/.ssh/authorized_keys /home/$DEPLOY_USER/.ssh/authorized_keys
+chmod 600 /home/$DEPLOY_USER/.ssh/authorized_keys
+chmod 700 /home/$DEPLOY_USER/.ssh
+chown -R $DEPLOY_USER:$DEPLOY_USER /home/$DEPLOY_USER/.ssh
+rm -f /tmp/deploy_key.pub
+
+echo "Key deployed for $DEPLOY_USER"
+REMOTE_KEY
 
 # Add to local SSH config
 if ! grep -q "^Host ${HOST}-deploy$" ~/.ssh/config 2>/dev/null; then
@@ -101,7 +118,16 @@ if ! grep -q "^Host ${HOST}-deploy$" ~/.ssh/config 2>/dev/null; then
     echo "Added '${HOST}-deploy' to ~/.ssh/config"
 fi
 
-echo "Done! Connect with: ssh ${HOST}-deploy"
+# Verify connection
+echo "Verifying deploy user SSH access..."
+if ssh -o BatchMode=yes -o ConnectTimeout=5 "${HOST}-deploy" "echo 'SSH key auth works!'" 2>/dev/null; then
+    echo -e "${GREEN}Deploy user SSH access verified${NC}"
+else
+    echo -e "${RED}WARNING: Deploy user SSH access failed!${NC}"
+    echo "Debugging — checking permissions on server..."
+    ssh "${HOST}-root" "ls -la /home/deploy/ /home/deploy/.ssh/ && cat /etc/ssh/sshd_config | grep -i -E 'pubkey|authorized|strictmodes|passwordauth'"
+    exit 1
+fi
 echo ""
 
 # ── Step 4: Install Docker ──────────────────────────

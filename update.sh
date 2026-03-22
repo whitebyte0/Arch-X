@@ -11,8 +11,10 @@ set -e
 
 # Keep sudo alive for the entire script
 sudo -v
-trap 'kill $(jobs -p) 2>/dev/null' EXIT
+SUDO_PID=
 while true; do sudo -n true; sleep 50; done &
+SUDO_PID=$!
+trap 'kill $SUDO_PID 2>/dev/null' EXIT
 
 DOTDIR="$(cd "$(dirname "$0")" && pwd)"
 GREEN='\033[0;32m'
@@ -102,17 +104,13 @@ step "4/5" "Reloading services..."
 # Reload Hyprland config
 hyprctl reload 2>/dev/null && info "Hyprland reloaded" || warn "Hyprland not running"
 
-# Restart waybar
-if pgrep -x waybar >/dev/null; then
-    killall waybar; nohup waybar >/dev/null 2>&1 &
-    info "Waybar restarted"
-fi
-
-# Restart dunst
-if pgrep -x dunst >/dev/null; then
-    killall dunst; nohup dunst >/dev/null 2>&1 &
-    info "Dunst restarted"
-fi
+# Restart waybar and dunst
+killall waybar 2>/dev/null || true
+killall dunst 2>/dev/null || true
+sleep 0.5
+hyprctl dispatch exec waybar 2>/dev/null
+hyprctl dispatch exec dunst 2>/dev/null
+info "Waybar and Dunst restarted"
 
 # Reload zsh config for current shell
 info "Run 'source ~/.zshrc' to apply shell changes"

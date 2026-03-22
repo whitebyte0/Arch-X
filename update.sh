@@ -95,7 +95,9 @@ info "~/.gnupg/gpg-agent.conf ✓"
 step "3/5" "Setting permissions..."
 
 chmod +x "$DOTDIR/waybar/scripts/"*.sh 2>/dev/null || true
+chmod +x "$DOTDIR/bin/"* 2>/dev/null || true
 info "Waybar scripts ✓"
+info "Bin scripts ✓"
 
 # ─── [4/5] Reload services ───────────────────────────
 

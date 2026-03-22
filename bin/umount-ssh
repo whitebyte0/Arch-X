@@ -1,0 +1,39 @@
+#!/bin/bash
+# Unmount remote filesystem
+# Usage: umount-ssh <host>   or   umount-ssh --all
+
+if [[ $# -lt 1 ]]; then
+    echo "Usage: umount-ssh <host>"
+    echo "       umount-ssh --all"
+    echo ""
+    echo "Mounted hosts:"
+    has_mounts=false
+    for dir in "$HOME"/mnt/*/; do
+        [[ -d "$dir" ]] || continue
+        if mountpoint -q "$dir" 2>/dev/null; then
+            echo "  $(basename "$dir")"
+            has_mounts=true
+        fi
+    done
+    $has_mounts || echo "  (none)"
+    exit 1
+fi
+
+if [[ "$1" == "--all" ]]; then
+    for dir in "$HOME"/mnt/*/; do
+        [[ -d "$dir" ]] || continue
+        if mountpoint -q "$dir" 2>/dev/null; then
+            fusermount -u "$dir" && rmdir "$dir" 2>/dev/null
+            echo "Unmounted $(basename "$dir")"
+        fi
+    done
+    exit 0
+fi
+
+mountpoint="$HOME/mnt/$1"
+if mountpoint -q "$mountpoint" 2>/dev/null; then
+    fusermount -u "$mountpoint" && rmdir "$mountpoint" 2>/dev/null
+    echo "Unmounted $1"
+else
+    echo "$1 is not mounted"
+fi

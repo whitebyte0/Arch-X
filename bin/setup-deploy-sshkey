@@ -1,0 +1,45 @@
+#!/bin/bash
+# Generate SSH key and deploy to remote host in one command
+# Usage: ssh-deploy-key <label> <user> <ip> [port]
+
+if [[ $# -lt 3 ]]; then
+    echo "Usage: ssh-deploy-key <label> <user> <ip> [port]"
+    echo "  label  — name for the key and ssh config entry"
+    echo "  user   — remote username"
+    echo "  ip     — remote host IP or domain"
+    echo "  port   — SSH port (default: 22)"
+    echo ""
+    echo "Example: ssh-deploy-key prod-api root 38.242.227.121"
+    exit 1
+fi
+
+label=$1 user=$2 ip=$3 port=${4:-22}
+keyfile="$HOME/.ssh/$label"
+
+# check if key already exists
+if [[ -f "$keyfile" ]]; then
+    echo "Key $keyfile already exists. Deploy existing key? [y/N]"
+    read -r reply
+    [[ "$reply" != [yY] ]] && exit 1
+else
+    echo "Generating SSH key: $keyfile"
+    ssh-keygen -t ed25519 -f "$keyfile" -N "" -C "$label"
+fi
+
+# deploy key to remote host (will prompt for password)
+echo "Deploying key to $user@$ip:$port ..."
+ssh-copy-id -i "$keyfile.pub" -p "$port" "$user@$ip"
+
+if [[ $? -ne 0 ]]; then
+    echo "Failed to deploy key."
+    exit 1
+fi
+
+# add to ssh config if not already there
+if ! grep -q "^Host $label$" ~/.ssh/config 2>/dev/null; then
+    printf '\nHost %s\n    HostName %s\n    User %s\n    Port %s\n    IdentityFile %s\n' \
+        "$label" "$ip" "$user" "$port" "$keyfile" >> ~/.ssh/config
+    echo "Added '$label' to ~/.ssh/config"
+fi
+
+echo "Done! Connect with: ssh $label"

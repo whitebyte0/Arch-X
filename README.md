@@ -34,9 +34,11 @@ Minimal Arch Linux + Hyprland development environment. One script to go from a f
 - nvim-autopairs, nvim-surround, Comment.nvim
 
 **SSH Management**
-- `s` — interactive SSH host picker (fzf + ~/.ssh/config)
+- `sshs` — interactive SSH host picker (TUI)
 - `ssh-deploy-key <label> <user> <ip>` — generate and deploy SSH key in one command
 - `mount-ssh <host>` — mount remote filesystem via SSHFS, opens yazi
+- `umount-ssh <host>` — unmount remote filesystem (`--all` to unmount all)
+- `setup-deploy-server <host> <port>` — provision a fresh Ubuntu VPS for deployment
 - ssh-agent with systemd, auto-loads keys
 
 **Security**
@@ -139,8 +141,9 @@ This syncs packages, verifies symlinks, and reloads Hyprland, Waybar, and Dunst 
 | Super+K | Lock screen |
 | Super+Arrows | Move focus |
 | Super+Shift+Arrows | Move window |
-| Super+1-5 | Switch workspace |
-| Super+Shift+1-5 | Move window to workspace |
+| Super+Alt+Arrows | Resize window |
+| Super+1-0 | Switch workspace (1-10) |
+| Super+Shift+1-0 | Move window to workspace |
 | Super+S | Screen record (full) |
 | Super+E | Screen record (region) |
 | Alt+Shift | Switch keyboard layout |
@@ -179,5 +182,6 @@ LSP servers are installed automatically via Mason on first launch. Run `:Mason` 
 ├── gtk-3.0/            # GTK3 theme settings
 ├── gtk-4.0/            # GTK4 theme settings
 ├── gnupg/              # GPG agent config
-└── ssh/                # SSH config template
+├── ssh/                # SSH config template
+└── bin/                # CLI tools (ssh-deploy-key, mount-ssh, etc.)
 ```

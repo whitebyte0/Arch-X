@@ -1,0 +1,118 @@
+#!/bin/bash
+#
+# Arch-X — Update an existing installation
+#
+# Usage:
+#   cd ~/Arch-X && git pull && ./update.sh
+#
+# Safe to run repeatedly — only applies changes, skips what's already done.
+
+set -e
+
+DOTDIR="$(cd "$(dirname "$0")" && pwd)"
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+step() { echo -e "\n${GREEN}[$1]${NC} $2"; }
+warn() { echo -e "${YELLOW}  ⚠ $1${NC}"; }
+info() { echo -e "  $1"; }
+
+echo ""
+echo "  ╔══════════════════════════════════════╗"
+echo "  ║         Arch-X Update                ║"
+echo "  ╚══════════════════════════════════════╝"
+echo ""
+
+# ─── [1/5] Packages ──────────────────────────────────
+
+step "1/5" "Syncing packages..."
+
+sudo pacman -S --needed --noconfirm \
+    hyprland waybar dunst wofi hyprlock grim slurp wf-recorder nwg-look \
+    xdg-desktop-portal-hyprland \
+    ghostty zsh zsh-autosuggestions zsh-syntax-highlighting \
+    fzf fd ripgrep eza bat zoxide yazi sshfs lazygit sshs \
+    neovim git docker docker-compose \
+    ttf-jetbrains-mono-nerd \
+    pass pass-otp wl-clipboard gnupg pinentry \
+    openssh sshpass \
+    firefox \
+    mesa vulkan-radeon libva-mesa-driver
+
+# AUR packages
+if command -v yay &>/dev/null; then
+    yay -S --needed --noconfirm wlogout adw-gtk3
+else
+    warn "yay not found — skipping AUR packages"
+fi
+
+# ─── [2/5] Symlinks ──────────────────────────────────
+
+step "2/5" "Verifying symlinks..."
+
+mkdir -p "$HOME/.config"
+
+for dir in hypr waybar ghostty wofi dunst wlogout nvim gtk-3.0 gtk-4.0; do
+    if [ -L "$HOME/.config/$dir" ] && [ "$(readlink -f "$HOME/.config/$dir")" = "$DOTDIR/$dir" ]; then
+        info "~/.config/$dir ✓"
+    else
+        [ -e "$HOME/.config/$dir" ] && [ ! -L "$HOME/.config/$dir" ] && \
+            mv "$HOME/.config/$dir" "$HOME/.config/${dir}.bak" && \
+            warn "Backed up ~/.config/$dir → ${dir}.bak"
+        ln -sfn "$DOTDIR/$dir" "$HOME/.config/$dir"
+        info "~/.config/$dir → linked"
+    fi
+done
+
+# Home dotfiles
+for file in .zshrc .zprofile; do
+    if [ -L "$HOME/$file" ] && [ "$(readlink -f "$HOME/$file")" = "$DOTDIR/$file" ]; then
+        info "~/$file ✓"
+    else
+        [ -f "$HOME/$file" ] && [ ! -L "$HOME/$file" ] && \
+            mv "$HOME/$file" "$HOME/${file}.bak" && \
+            warn "Backed up ~/$file → ${file}.bak"
+        ln -sf "$DOTDIR/$file" "$HOME/$file"
+        info "~/$file → linked"
+    fi
+done
+
+# GPG agent
+mkdir -p "$HOME/.gnupg" && chmod 700 "$HOME/.gnupg"
+ln -sf "$DOTDIR/gnupg/gpg-agent.conf" "$HOME/.gnupg/gpg-agent.conf"
+info "~/.gnupg/gpg-agent.conf ✓"
+
+# ─── [3/5] Permissions ───────────────────────────────
+
+step "3/5" "Setting permissions..."
+
+chmod +x "$DOTDIR/waybar/scripts/"*.sh 2>/dev/null || true
+info "Waybar scripts ✓"
+
+# ─── [4/5] Reload services ───────────────────────────
+
+step "4/5" "Reloading services..."
+
+# Reload Hyprland config
+hyprctl reload 2>/dev/null && info "Hyprland reloaded" || warn "Hyprland not running"
+
+# Restart waybar
+if pgrep -x waybar >/dev/null; then
+    killall waybar; nohup waybar >/dev/null 2>&1 &
+    info "Waybar restarted"
+fi
+
+# Restart dunst
+if pgrep -x dunst >/dev/null; then
+    killall dunst; nohup dunst >/dev/null 2>&1 &
+    info "Dunst restarted"
+fi
+
+# Reload zsh config for current shell
+info "Run 'source ~/.zshrc' to apply shell changes"
+
+# ─── [5/5] Done ──────────────────────────────────────
+
+step "5/5" "Update complete!"
+echo ""

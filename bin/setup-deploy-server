@@ -16,7 +16,7 @@ if [[ $# -lt 2 ]]; then
     echo "  port  — SSH port (e.g. 22)"
     echo ""
     echo "This script will:"
-    echo "  1. Setup SSH key auth for root (via ssh-deploy-key)"
+    echo "  1. Setup SSH key auth for root (via setup-deploy-sshkey)"
     echo "  2. Create a 'deploy' user with limited permissions"
     echo "  3. Setup SSH key auth for deploy user"
     echo "  4. Install Docker on the server"
@@ -39,7 +39,7 @@ echo ""
 
 # ── Step 1: Root SSH key ────────────────────────────
 echo -e "${YELLOW}[1/6] Setting up root SSH key...${NC}"
-ssh-deploy-key "${HOST}-root" root "$HOST" "$PORT"
+setup-deploy-sshkey "${HOST}-root" root "$HOST" "$PORT"
 echo ""
 
 # ── Step 2: Create deploy user ──────────────────────
@@ -79,7 +79,7 @@ echo ""
 
 # ── Step 3: Deploy user SSH key ─────────────────────
 echo -e "${YELLOW}[3/6] Setting up deploy user SSH key...${NC}"
-ssh-deploy-key "${HOST}-deploy" "$DEPLOY_USER" "$HOST" "$PORT"
+setup-deploy-sshkey "${HOST}-deploy" "$DEPLOY_USER" "$HOST" "$PORT"
 echo ""
 
 # ── Step 4: Install Docker ──────────────────────────

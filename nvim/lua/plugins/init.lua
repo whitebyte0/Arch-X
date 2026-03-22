@@ -58,7 +58,7 @@ return {
         "lua", "vim", "vimdoc",
         "go", "gomod", "gosum",
         "rust",
-        "javascript", "typescript", "tsx", "jsx",
+        "javascript", "typescript", "tsx",
         "php",
         "html", "css", "json", "yaml", "toml",
         "bash", "dockerfile",

@@ -1,270 +1,313 @@
 #!/bin/bash
-set -e
+#
+# setup-deploy-server — Provision a fresh Ubuntu 22 VPS for deployment
+#
+# Creates a least-privileged 'deploy' user with SSH key auth,
+# installs Docker, hardens SSH, and sets up the deploy directory.
+# Auto-rolls back on failure.
+#
+# Tested on: Ubuntu 22.04 LTS (Contabo VPS)
+#
 
-# ── Colors ──────────────────────────────────────────
+# ── Strict mode (no set -e; we handle errors manually) ──
+set -o pipefail
+
+# ── Colors ───────────────────────────────────────────────
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
+DIM='\033[2m'
 NC='\033[0m'
 
-# ── Usage ───────────────────────────────────────────
-if [[ $# -lt 2 ]]; then
-    echo -e "${CYAN}Usage:${NC} setup-deploy-server <host> <port>"
+# ── Logging ──────────────────────────────────────────────
+ok()   { echo -e "  ${GREEN}✓${NC} $1"; }
+skip() { echo -e "  ${YELLOW}→${NC} $1 ${DIM}(skipped)${NC}"; }
+err()  { echo -e "  ${RED}✗${NC} $1" >&2; }
+step() { echo -e "\n${CYAN}[$1]${NC} $2"; }
+
+# ── Rollback tracking ───────────────────────────────────
+COMPLETED_STEPS=()
+ROLLBACK_NEEDED=false
+
+rollback() {
+    ROLLBACK_NEEDED=true
     echo ""
-    echo "  host  — IP or domain of the Ubuntu 22 server"
-    echo "  port  — SSH port (e.g. 22)"
+    err "Setup failed — rolling back completed steps..."
+
+    for ((i=${#COMPLETED_STEPS[@]}-1; i>=0; i--)); do
+        case "${COMPLETED_STEPS[$i]}" in
+            deploy-user)
+                echo -e "  ${DIM}Rolling back: deploy user${NC}"
+                ssh "${HOST}-root" 'userdel -r deploy 2>/dev/null; rm -f /etc/sudoers.d/deploy' 2>/dev/null
+                ;;
+            deploy-key-local)
+                echo -e "  ${DIM}Rolling back: local deploy key${NC}"
+                rm -f "$HOME/.ssh/${HOST}-deploy" "$HOME/.ssh/${HOST}-deploy.pub"
+                sed -i "/^Host ${HOST}-deploy$/,/^$/d" ~/.ssh/config 2>/dev/null
+                ssh-add -d "$HOME/.ssh/${HOST}-deploy" 2>/dev/null
+                ;;
+            deploy-key-remote)
+                echo -e "  ${DIM}Rolling back: remote deploy key${NC}"
+                ssh "${HOST}-root" 'rm -f /home/deploy/.ssh/authorized_keys' 2>/dev/null
+                ;;
+            sshd-hardened)
+                echo -e "  ${DIM}Rolling back: sshd config${NC}"
+                ssh "${HOST}-root" '[ -f /etc/ssh/sshd_config.bak ] && cp /etc/ssh/sshd_config.bak /etc/ssh/sshd_config && systemctl restart sshd' 2>/dev/null
+                ;;
+        esac
+    done
+
+    err "Rollback complete. Fix the issue and re-run."
+    exit 1
+}
+
+trap 'if [ "$ROLLBACK_NEEDED" = false ]; then rollback; fi' ERR
+
+# ── Usage ────────────────────────────────────────────────
+usage() {
+    echo -e "${CYAN}setup-deploy-server${NC} — Provision Ubuntu 22 VPS for deployment"
     echo ""
-    echo "This script will:"
-    echo "  1. Setup SSH key auth for root (via setup-deploy-sshkey)"
-    echo "  2. Create a 'deploy' user with limited permissions"
-    echo "  3. Setup SSH key auth for deploy user"
-    echo "  4. Install Docker on the server"
-    echo "  5. Create /opt/deploy directory with proper permissions"
-    echo "  6. Disable SSH password auth (key-only)"
+    echo -e "  Usage: setup-deploy-server <host> [port]"
     echo ""
-    echo -e "${CYAN}Example:${NC} setup-deploy-server 203.0.113.10 22"
-    return 1 2>/dev/null || exit 1
+    echo "  host  — IP or domain of the server"
+    echo "  port  — SSH port (default: 22)"
+    echo ""
+    echo "  Steps performed:"
+    echo "    1. Setup root SSH key"
+    echo "    2. Create 'deploy' user (locked down, docker-only sudo)"
+    echo "    3. Deploy SSH key for deploy user"
+    echo "    4. Install Docker"
+    echo "    5. Finalize (deploy dir, SSH hardening, banner)"
+    echo ""
+    echo -e "  ${CYAN}Example:${NC} setup-deploy-server 203.0.113.10"
+    exit 1
+}
+
+# ── Input validation ─────────────────────────────────────
+[[ $# -lt 1 ]] && usage
+
+HOST="$1"
+PORT="${2:-22}"
+
+# Reject shell metacharacters in HOST
+if [[ "$HOST" =~ [^a-zA-Z0-9._-] ]]; then
+    err "Invalid host: contains unsafe characters"
+    exit 1
 fi
 
-HOST=$1
-PORT=$2
+# Validate PORT is numeric
+if [[ ! "$PORT" =~ ^[0-9]+$ ]] || [[ "$PORT" -lt 1 ]] || [[ "$PORT" -gt 65535 ]]; then
+    err "Invalid port: $PORT"
+    exit 1
+fi
+
 DEPLOY_USER="deploy"
 DEPLOY_DIR="/opt/deploy"
-
-echo -e "${GREEN}═══════════════════════════════════════${NC}"
-echo -e "${GREEN}  Deploy Server Setup — Ubuntu 22      ${NC}"
-echo -e "${GREEN}═══════════════════════════════════════${NC}"
-echo ""
-
-# ── Step 1: Root SSH key ────────────────────────────
-echo -e "${YELLOW}[1/6] Setting up root SSH key...${NC}"
-setup-deploy-sshkey "${HOST}-root" root "$HOST" "$PORT"
-echo ""
-
-# ── Step 2: Create deploy user ──────────────────────
-echo -e "${YELLOW}[2/6] Creating '${DEPLOY_USER}' user on server...${NC}"
-ssh "${HOST}-root" << 'REMOTE_USER'
-set -e
-
-DEPLOY_USER="deploy"
-
-# Create user if not exists
-if ! id "$DEPLOY_USER" &>/dev/null; then
-    useradd -m -s /bin/bash "$DEPLOY_USER"
-    echo "Created user: $DEPLOY_USER"
-else
-    echo "User $DEPLOY_USER already exists"
-fi
-
-# Unlock account — useradd without -p creates a locked account
-# sshd refuses key auth for locked users on Ubuntu
-passwd -u "$DEPLOY_USER" 2>/dev/null || usermod -p '*' "$DEPLOY_USER"
-echo "Account unlocked for SSH key auth"
-
-# Add to docker group (will be created when docker is installed)
-usermod -aG sudo "$DEPLOY_USER" 2>/dev/null || true
-
-# Setup SSH directory for deploy user
-mkdir -p /home/$DEPLOY_USER/.ssh
-chmod 700 /home/$DEPLOY_USER/.ssh
-touch /home/$DEPLOY_USER/.ssh/authorized_keys
-chmod 600 /home/$DEPLOY_USER/.ssh/authorized_keys
-chown -R $DEPLOY_USER:$DEPLOY_USER /home/$DEPLOY_USER/.ssh
-
-# Restrict sudo — deploy user can only run docker and docker compose
-cat > /etc/sudoers.d/$DEPLOY_USER << 'SUDOERS'
-deploy ALL=(ALL) NOPASSWD: /usr/bin/docker, /usr/bin/docker-compose, /usr/local/bin/docker-compose
-SUDOERS
-chmod 440 /etc/sudoers.d/$DEPLOY_USER
-
-echo "Deploy user configured with restricted sudo"
-REMOTE_USER
-echo ""
-
-# ── Step 3: Deploy user SSH key ─────────────────────
-echo -e "${YELLOW}[3/6] Setting up deploy user SSH key...${NC}"
-
 KEYFILE="$HOME/.ssh/${HOST}-deploy"
 
-# Generate key locally if it doesn't exist
-if [[ -f "$KEYFILE" ]]; then
-    echo "Key $KEYFILE already exists, reusing."
+echo -e "${GREEN}"
+echo "  ╔═══════════════════════════════════════╗"
+echo "  ║   Deploy Server Setup — Ubuntu 22     ║"
+echo "  ╚═══════════════════════════════════════╝"
+echo -e "${NC}"
+
+# ── Step 1: Root SSH key ─────────────────────────────────
+step "1/5" "Root SSH key"
+
+if ssh -o BatchMode=yes -o ConnectTimeout=5 "${HOST}-root" "true" 2>/dev/null; then
+    skip "Root SSH access already configured"
 else
-    echo "Generating SSH key: $KEYFILE"
-    ssh-keygen -t ed25519 -f "$KEYFILE" -N "" -C "${HOST}-deploy"
+    setup-deploy-sshkey "${HOST}-root" root "$HOST" "$PORT"
+    ok "Root SSH key deployed"
 fi
 
-# Ensure the correct key is in the agent (remove stale, add current)
-ssh-add -d "$KEYFILE" 2>/dev/null || true
-ssh-add "$KEYFILE"
+# ── Step 2: Create deploy user ───────────────────────────
+step "2/5" "Deploy user"
 
-# Push public key to deploy user via root session using scp (avoids shell quoting issues)
-scp -o "StrictHostKeyChecking=no" "${KEYFILE}.pub" "${HOST}-root:/tmp/deploy_key.pub"
-ssh "${HOST}-root" << 'REMOTE_KEY'
+USER_EXISTS=$(ssh "${HOST}-root" 'id deploy &>/dev/null && echo yes || echo no')
+
+if [[ "$USER_EXISTS" == "yes" ]]; then
+    skip "User 'deploy' already exists"
+else
+    ssh "${HOST}-root" << 'REMOTE'
 set -e
-DEPLOY_USER="deploy"
-HOME_DIR="/home/$DEPLOY_USER"
-
-# Ensure home directory exists and has correct ownership
-if [ ! -d "$HOME_DIR" ]; then
-    mkdir -p "$HOME_DIR"
-    echo "Created $HOME_DIR"
+useradd -m -s /bin/bash deploy
+passwd -u deploy 2>/dev/null || usermod -p '*' deploy
+mkdir -p /home/deploy/.ssh
+chmod 700 /home/deploy/.ssh
+touch /home/deploy/.ssh/authorized_keys
+chmod 600 /home/deploy/.ssh/authorized_keys
+chown -R deploy:deploy /home/deploy/.ssh
+REMOTE
+    ok "User 'deploy' created and unlocked"
 fi
-chown $DEPLOY_USER:$DEPLOY_USER "$HOME_DIR"
-chmod 755 "$HOME_DIR"
 
-# Setup .ssh directory
-mkdir -p "$HOME_DIR/.ssh"
-chmod 700 "$HOME_DIR/.ssh"
+# Sudoers (always ensure correct)
+ssh "${HOST}-root" << 'REMOTE'
+cat > /etc/sudoers.d/deploy << 'SUDOERS'
+deploy ALL=(ALL) NOPASSWD: /usr/bin/docker, /usr/bin/docker-compose, /usr/local/bin/docker-compose, /usr/libexec/docker/cli-plugins/docker-compose
+SUDOERS
+chmod 440 /etc/sudoers.d/deploy
+REMOTE
+ok "Sudoers configured (docker only)"
 
-# Append key and fix permissions
-cat /tmp/deploy_key.pub >> "$HOME_DIR/.ssh/authorized_keys"
-sort -u -o "$HOME_DIR/.ssh/authorized_keys" "$HOME_DIR/.ssh/authorized_keys"
-chmod 600 "$HOME_DIR/.ssh/authorized_keys"
-chown -R $DEPLOY_USER:$DEPLOY_USER "$HOME_DIR/.ssh"
+COMPLETED_STEPS+=(deploy-user)
+
+# ── Step 3: Deploy user SSH key ──────────────────────────
+step "3/5" "Deploy SSH key"
+
+# Generate local key
+if [[ -f "$KEYFILE" ]]; then
+    skip "Key $KEYFILE exists, reusing"
+else
+    ssh-keygen -t ed25519 -f "$KEYFILE" -N "" -C "${HOST}-deploy" -q
+    ok "Generated $KEYFILE"
+fi
+COMPLETED_STEPS+=(deploy-key-local)
+
+# Sync agent
+ssh-add -d "$KEYFILE" 2>/dev/null || true
+ssh-add "$KEYFILE" 2>/dev/null
+ok "Key loaded into agent"
+
+# Push to server
+scp -q -o StrictHostKeyChecking=no "${KEYFILE}.pub" "${HOST}-root:/tmp/deploy_key.pub"
+ssh "${HOST}-root" << 'REMOTE'
+set -e
+cat /tmp/deploy_key.pub >> /home/deploy/.ssh/authorized_keys
+sort -u -o /home/deploy/.ssh/authorized_keys /home/deploy/.ssh/authorized_keys
+chmod 600 /home/deploy/.ssh/authorized_keys
+chown deploy:deploy /home/deploy/.ssh/authorized_keys
 rm -f /tmp/deploy_key.pub
-
-# Fix Ubuntu 22 sshd_config.d overrides — remove any conflicting drop-in configs
-for f in /etc/ssh/sshd_config.d/*.conf; do
-    [ -f "$f" ] || continue
-    if grep -qi "PasswordAuthentication\|PubkeyAuthentication" "$f"; then
-        sed -i 's/^PasswordAuthentication.*/PasswordAuthentication no/' "$f"
-        sed -i '/^PubkeyAuthentication/d' "$f"
-        echo "Fixed override in $f"
-    fi
-done
-
-# Restart sshd to pick up any changes
-systemctl restart sshd
-
-# Verify authorized_keys is readable
-echo "authorized_keys contents:"
-cat "$HOME_DIR/.ssh/authorized_keys"
-echo ""
-echo "Permissions:"
-ls -la "$HOME_DIR/" "$HOME_DIR/.ssh/"
-
-echo "Key deployed for $DEPLOY_USER"
-REMOTE_KEY
-
-# Set server banner
-ssh "${HOST}-root" "printf '\n  ┌──────────────────────────────┐\n  │  %-28s│\n  │  Production Server           │\n  └──────────────────────────────┘\n\n' '${HOST}' > /etc/motd"
-echo "Server banner set"
+REMOTE
+COMPLETED_STEPS+=(deploy-key-remote)
+ok "Public key authorized on server"
 
 # Add to local SSH config
 if ! grep -q "^Host ${HOST}-deploy$" ~/.ssh/config 2>/dev/null; then
     printf '\nHost %s-deploy\n    HostName %s\n    User %s\n    Port %s\n    IdentityFile %s\n' \
         "$HOST" "$HOST" "$DEPLOY_USER" "$PORT" "$KEYFILE" >> ~/.ssh/config
-    echo "Added '${HOST}-deploy' to ~/.ssh/config"
+    ok "Added '${HOST}-deploy' to ~/.ssh/config"
 fi
 
-# Verify connection (wait for sshd restart to complete)
-sleep 2
-echo "Verifying deploy user SSH access..."
-if ssh -o BatchMode=yes -o ConnectTimeout=10 "${HOST}-deploy" "echo 'SSH key auth works!'" 2>/dev/null; then
-    echo -e "${GREEN}Deploy user SSH access verified${NC}"
-else
-    echo -e "${RED}WARNING: Deploy user SSH access failed!${NC}"
-    echo "Debugging — checking permissions on server..."
-    ssh "${HOST}-root" "ls -la /home/deploy/ /home/deploy/.ssh/ && cat /etc/ssh/sshd_config | grep -i -E 'pubkey|authorized|strictmodes|passwordauth'"
-    exit 1
-fi
-echo ""
-
-# ── Step 4: Install Docker ──────────────────────────
-echo -e "${YELLOW}[4/6] Installing Docker on server...${NC}"
-ssh "${HOST}-root" << 'REMOTE_DOCKER'
-set -e
-
-if command -v docker &>/dev/null; then
-    echo "Docker already installed: $(docker --version)"
-else
-    echo "Installing Docker..."
-    echo "Waiting for apt lock (up to 120s)..."
-    for i in $(seq 1 60); do
-        fuser /var/lib/dpkg/lock-frontend &>/dev/null || break
-        sleep 2
-    done
-    apt-get update -o DPkg::Lock::Timeout=60 -qq
-    apt-get install -y -qq -o DPkg::Lock::Timeout=60 ca-certificates curl gnupg
-    install -m 0755 -d /etc/apt/keyrings
-    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null
-    chmod a+r /etc/apt/keyrings/docker.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" > /etc/apt/sources.list.d/docker.list
-    apt-get update -qq
-    apt-get install -y -qq -o DPkg::Lock::Timeout=60 docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-    echo "Docker installed: $(docker --version)"
-fi
-
-# Add deploy user to docker group
-usermod -aG docker deploy
-echo "Added deploy user to docker group"
-
-# Enable and start docker
-systemctl enable docker
-systemctl start docker
-REMOTE_DOCKER
-echo ""
-
-# ── Step 5: Create deploy directory ─────────────────
-echo -e "${YELLOW}[5/6] Creating deploy directory...${NC}"
-ssh "${HOST}-root" << REMOTE_DIR
-set -e
-
-DEPLOY_DIR="${DEPLOY_DIR}"
-DEPLOY_USER="deploy"
-
-mkdir -p \$DEPLOY_DIR
-chown \$DEPLOY_USER:\$DEPLOY_USER \$DEPLOY_DIR
-chmod 750 \$DEPLOY_DIR
-
-echo "Deploy directory created: \$DEPLOY_DIR (owned by \$DEPLOY_USER)"
-REMOTE_DIR
-echo ""
-
-# ── Step 6: Disable password auth ───────────────────
-echo -e "${YELLOW}[6/6] Hardening SSH — disabling password auth...${NC}"
-ssh "${HOST}-root" << 'REMOTE_SSH'
-set -e
-
-SSHD_CONFIG="/etc/ssh/sshd_config"
-
-# Backup original config
-cp $SSHD_CONFIG ${SSHD_CONFIG}.bak
-
-# Disable password auth, enable key-only
-sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication no/' $SSHD_CONFIG
-sed -i 's/^#*ChallengeResponseAuthentication.*/ChallengeResponseAuthentication no/' $SSHD_CONFIG
-sed -i 's/^#*UsePAM.*/UsePAM no/' $SSHD_CONFIG
-sed -i 's/^#*PubkeyAuthentication.*/PubkeyAuthentication yes/' $SSHD_CONFIG
-sed -i 's/^#*PermitRootLogin.*/PermitRootLogin prohibit-password/' $SSHD_CONFIG
-
-# Ensure settings exist if not already in file
-grep -q "^PasswordAuthentication" $SSHD_CONFIG || echo "PasswordAuthentication no" >> $SSHD_CONFIG
-grep -q "^PubkeyAuthentication" $SSHD_CONFIG || echo "PubkeyAuthentication yes" >> $SSHD_CONFIG
-grep -q "^PermitRootLogin" $SSHD_CONFIG || echo "PermitRootLogin prohibit-password" >> $SSHD_CONFIG
-
-# Restart SSH
+# Fix Ubuntu 22 sshd_config.d overrides that block key auth
+ssh "${HOST}-root" << 'REMOTE'
+for f in /etc/ssh/sshd_config.d/*.conf; do
+    [ -f "$f" ] || continue
+    sed -i '/^PasswordAuthentication/d' "$f"
+    sed -i '/^PubkeyAuthentication/d' "$f"
+done
 systemctl restart sshd
-echo "SSH hardened: password auth disabled, key-only auth enabled"
-echo "Root login: key-only (prohibit-password)"
-REMOTE_SSH
+REMOTE
+
+# Verify with retry
+VERIFIED=false
+for attempt in 1 2 3; do
+    if ssh -o BatchMode=yes -o ConnectTimeout=10 "${HOST}-deploy" "true" 2>/dev/null; then
+        VERIFIED=true
+        break
+    fi
+    sleep 2
+done
+
+if $VERIFIED; then
+    ok "Deploy SSH access verified"
+else
+    err "Deploy SSH access failed after 3 attempts"
+    ssh "${HOST}-root" 'echo "=== Permissions ===" && ls -la /home/deploy/ /home/deploy/.ssh/ && echo "=== sshd effective config ===" && sshd -T -C user=deploy 2>/dev/null | grep -E "pubkey|authorized|password"' 2>/dev/null
+    rollback
+fi
+
+# ── Step 4: Install Docker ───────────────────────────────
+step "4/5" "Docker"
+
+DOCKER_EXISTS=$(ssh "${HOST}-root" 'command -v docker &>/dev/null && echo yes || echo no')
+
+if [[ "$DOCKER_EXISTS" == "yes" ]]; then
+    skip "Docker already installed"
+else
+    ssh "${HOST}-root" << 'REMOTE'
+set -e
+export DEBIAN_FRONTEND=noninteractive
+apt-get update -o DPkg::Lock::Timeout=120 -qq
+apt-get install -y -o DPkg::Lock::Timeout=120 -qq ca-certificates curl gnupg
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null
+chmod a+r /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" > /etc/apt/sources.list.d/docker.list
+apt-get update -o DPkg::Lock::Timeout=120 -qq
+apt-get install -y -o DPkg::Lock::Timeout=120 -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+REMOTE
+    ok "Docker installed"
+fi
+
+ssh "${HOST}-root" << 'REMOTE'
+usermod -aG docker deploy 2>/dev/null || true
+systemctl enable docker 2>/dev/null
+systemctl start docker 2>/dev/null
+REMOTE
+ok "Deploy user added to docker group"
+
+# ── Step 5: Finalize ─────────────────────────────────────
+step "5/5" "Finalize"
+
+# Deploy directory
+ssh "${HOST}-root" << 'REMOTE'
+set -e
+mkdir -p /opt/deploy
+chown deploy:deploy /opt/deploy
+chmod 750 /opt/deploy
+REMOTE
+ok "Deploy directory /opt/deploy created"
+
+# Harden SSH (single consolidated step)
+ssh "${HOST}-root" << 'REMOTE'
+set -e
+SSHD="/etc/ssh/sshd_config"
+cp "$SSHD" "${SSHD}.bak"
+
+sed -i 's/^#*PasswordAuthentication.*/PasswordAuthentication no/' "$SSHD"
+sed -i 's/^#*ChallengeResponseAuthentication.*/ChallengeResponseAuthentication no/' "$SSHD"
+sed -i 's/^#*KbdInteractiveAuthentication.*/KbdInteractiveAuthentication no/' "$SSHD"
+sed -i 's/^#*UsePAM.*/UsePAM no/' "$SSHD"
+sed -i 's/^#*PubkeyAuthentication.*/PubkeyAuthentication yes/' "$SSHD"
+sed -i 's/^#*PermitRootLogin.*/PermitRootLogin prohibit-password/' "$SSHD"
+
+grep -q "^PasswordAuthentication" "$SSHD" || echo "PasswordAuthentication no" >> "$SSHD"
+grep -q "^PubkeyAuthentication" "$SSHD"   || echo "PubkeyAuthentication yes" >> "$SSHD"
+grep -q "^PermitRootLogin" "$SSHD"        || echo "PermitRootLogin prohibit-password" >> "$SSHD"
+
+systemctl restart sshd
+REMOTE
+COMPLETED_STEPS+=(sshd-hardened)
+ok "SSH hardened (key-only, password disabled)"
+
+# Banner
+ssh "${HOST}-root" "printf '\n  ┌──────────────────────────────┐\n  │  %-28s│\n  │  Production Server           │\n  └──────────────────────────────┘\n\n' '${HOST}' > /etc/motd"
+ok "Server banner set"
+
+# Verify root still works after hardening
+if ! ssh -o BatchMode=yes -o ConnectTimeout=5 "${HOST}-root" "true" 2>/dev/null; then
+    err "Root SSH broken after hardening!"
+    rollback
+fi
+ok "Root SSH still works after hardening"
+
+# ── Done ─────────────────────────────────────────────────
+ROLLBACK_NEEDED=true  # Prevent trap from rolling back on clean exit
 
 echo ""
-echo -e "${GREEN}═══════════════════════════════════════${NC}"
-echo -e "${GREEN}  Setup Complete!                       ${NC}"
-echo -e "${GREEN}═══════════════════════════════════════${NC}"
+echo -e "${GREEN}  ╔═══════════════════════════════════════╗"
+echo -e "  ║   Setup Complete                      ║"
+echo -e "  ╚═══════════════════════════════════════╝${NC}"
 echo ""
-echo -e "  ${CYAN}Root access:${NC}    ssh ${HOST}-root"
-echo -e "  ${CYAN}Deploy access:${NC}  ssh ${HOST}-deploy"
-echo -e "  ${CYAN}Deploy dir:${NC}     ${DEPLOY_DIR}"
+echo -e "  ${CYAN}Root:${NC}      ssh ${HOST}-root"
+echo -e "  ${CYAN}Deploy:${NC}    ssh ${HOST}-deploy"
+echo -e "  ${CYAN}Directory:${NC} ${DEPLOY_DIR}"
 echo ""
-echo -e "  ${YELLOW}SSH auth:${NC}       Key-only (password disabled)"
-echo -e "  ${YELLOW}Root login:${NC}     Key-only (prohibit-password)"
-echo -e "  ${YELLOW}Deploy user:${NC}    Can only sudo docker commands"
+echo -e "  ${DIM}SSH: key-only | Root: prohibit-password | Deploy: docker sudo only${NC}"
 echo ""
 echo -e "  ${CYAN}Next steps:${NC}"
-echo -e "    1. Copy .env to server:  scp .env.production ${HOST}-deploy:${DEPLOY_DIR}/.env"
-echo -e "    2. Set GitLab CI vars:   CI_DEPLOY_USER=deploy  DEPLOY_HOST=${HOST}"
-echo -e "    3. Base64 deploy key:    sudo base64 -w 0 ~/.ssh/${HOST}-deploy | wl-copy"
+echo -e "    scp .env.production ${HOST}-deploy:${DEPLOY_DIR}/.env"
+echo -e "    base64 -w 0 ~/.ssh/${HOST}-deploy | wl-copy  ${DIM}# for GitLab CI${NC}"

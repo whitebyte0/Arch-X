@@ -38,7 +38,7 @@ Minimal Arch Linux + Hyprland development environment. One script to go from a f
 - `setup-deploy-sshkey <label> <user> <ip>` — generate and deploy SSH key in one command
 - `mount-ssh <host>` — mount remote filesystem via SSHFS, opens yazi
 - `umount-ssh <host>` — unmount remote filesystem (`--all` to unmount all)
-- `setup-deploy-server <host> <port>` — provision a fresh Ubuntu VPS for deployment
+- `setup-deploy-server <host> [port]` — provision a fresh Ubuntu VPS for deployment (tested on Ubuntu 22.04 LTS). Auto-rolls back on failure
 - ssh-agent with systemd, auto-loads keys
 
 **Security**

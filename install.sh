@@ -25,9 +25,9 @@ echo "  ║         Arch-X Environment Setup     ║"
 echo "  ╚══════════════════════════════════════╝"
 echo ""
 
-# ─── [1/10] Packages ─────────────────────────────────
+# ─── [1/9] Packages ──────────────────────────────────
 
-step "1/10" "Installing packages..."
+step "1/9" "Installing packages..."
 
 sudo pacman -S --needed --noconfirm \
     hyprland waybar dunst wofi hyprlock grim slurp wf-recorder nwg-look \
@@ -39,7 +39,7 @@ sudo pacman -S --needed --noconfirm \
     pass pass-otp wl-clipboard gnupg pinentry \
     openssh sshpass \
     firefox \
-    sddm qt6-svg qt6-declarative qt6-wayland libxcb xcb-util-cursor
+    mesa vulkan-radeon libva-mesa-driver
 
 # AUR packages (requires yay)
 if command -v yay &>/dev/null; then
@@ -53,9 +53,9 @@ else
     yay -S --needed --noconfirm wlogout adw-gtk3
 fi
 
-# ─── [2/10] Symlink configs ──────────────────────────
+# ─── [2/9] Symlink configs ───────────────────────────
 
-step "2/10" "Linking configuration files..."
+step "2/9" "Linking configuration files..."
 
 mkdir -p "$HOME/.config"
 
@@ -76,6 +76,10 @@ fi
 ln -sf "$DOTDIR/.zshrc" "$HOME/.zshrc"
 info "~/.zshrc → $DOTDIR/.zshrc"
 
+# .zprofile (auto-start Hyprland on TTY1)
+ln -sf "$DOTDIR/.zprofile" "$HOME/.zprofile"
+info "~/.zprofile → $DOTDIR/.zprofile"
+
 # SSH config — copy (don't symlink, user will add hosts)
 mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
 if [ ! -f "$HOME/.ssh/config" ]; then
@@ -91,9 +95,9 @@ mkdir -p "$HOME/.gnupg" && chmod 700 "$HOME/.gnupg"
 ln -sf "$DOTDIR/gnupg/gpg-agent.conf" "$HOME/.gnupg/gpg-agent.conf"
 info "~/.gnupg/gpg-agent.conf → $DOTDIR/gnupg/gpg-agent.conf"
 
-# ─── [3/10] Default shell ────────────────────────────
+# ─── [3/9] Default shell ─────────────────────────────
 
-step "3/10" "Setting zsh as default shell..."
+step "3/9" "Setting zsh as default shell..."
 
 if [ "$SHELL" != "/usr/bin/zsh" ]; then
     chsh -s /usr/bin/zsh
@@ -102,9 +106,9 @@ else
     info "Already using zsh"
 fi
 
-# ─── [4/10] SSH agent ────────────────────────────────
+# ─── [4/9] SSH agent ─────────────────────────────────
 
-step "4/10" "Enabling SSH agent..."
+step "4/9" "Enabling SSH agent..."
 
 systemctl --user enable --now ssh-agent.socket 2>/dev/null || \
     systemctl --user enable --now ssh-agent 2>/dev/null || \
@@ -114,9 +118,9 @@ systemctl --user enable --now ssh-agent.socket 2>/dev/null || \
 grep -rl "PRIVATE KEY" ~/.ssh/ 2>/dev/null | xargs -r ssh-add 2>/dev/null || true
 info "SSH agent configured"
 
-# ─── [5/10] Docker ───────────────────────────────────
+# ─── [5/9] Docker ────────────────────────────────────
 
-step "5/10" "Enabling Docker..."
+step "5/9" "Enabling Docker..."
 
 sudo systemctl enable --now docker
 if ! groups "$USER" | grep -q docker; then
@@ -126,41 +130,32 @@ else
     info "Already in docker group"
 fi
 
-# ─── [6/10] GTK theme ────────────────────────────────
+# ─── [6/9] GTK theme ─────────────────────────────────
 
-step "6/10" "Applying GTK theme..."
+step "6/9" "Applying GTK theme..."
 
 gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3-dark' 2>/dev/null || \
     warn "gsettings not available — GTK theme will apply from settings.ini on first Hyprland session"
 gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
 info "GTK theme set to adw-gtk3-dark"
 
-# ─── [7/10] Waybar scripts ───────────────────────────
+# ─── [7/9] Waybar scripts ────────────────────────────
 
-step "7/10" "Setting script permissions..."
+step "7/9" "Setting script permissions..."
 
 chmod +x "$DOTDIR/waybar/scripts/"*.sh 2>/dev/null || true
 info "Waybar scripts marked executable"
 
-# ─── [8/10] SDDM display manager ─────────────────────
+# ─── [8/9] Neovim plugins ────────────────────────────
 
-step "8/10" "Setting up SDDM..."
-
-sudo cp -r "$DOTDIR/sddm-theme" /usr/share/sddm/themes/whitebyte
-sudo cp "$DOTDIR/sddm/sddm.conf" /etc/sddm.conf
-sudo systemctl enable sddm
-info "SDDM enabled with whitebyte theme"
-
-# ─── [9/10] Neovim plugins ───────────────────────────
-
-step "9/10" "Installing Neovim plugins..."
+step "8/9" "Installing Neovim plugins..."
 
 nvim --headless "+Lazy! sync" +qa 2>/dev/null || \
     warn "Neovim plugin sync skipped — run 'nvim' to install plugins on first launch"
 
-# ─── [10/10] Summary ─────────────────────────────────
+# ─── [9/9] Summary ───────────────────────────────────
 
-step "10/10" "Setup complete!"
+step "9/9" "Setup complete!"
 
 echo ""
 echo "  ┌──────────────────────────────────────┐"

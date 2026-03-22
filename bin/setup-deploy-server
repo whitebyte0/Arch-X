@@ -95,21 +95,53 @@ scp -o "StrictHostKeyChecking=no" "${KEYFILE}.pub" "${HOST}-root:/tmp/deploy_key
 ssh "${HOST}-root" << 'REMOTE_KEY'
 set -e
 DEPLOY_USER="deploy"
+HOME_DIR="/home/$DEPLOY_USER"
 
-# Ensure home dir permissions (sshd StrictModes requires this)
-chmod 755 /home/$DEPLOY_USER
-chown $DEPLOY_USER:$DEPLOY_USER /home/$DEPLOY_USER
+# Ensure home directory exists and has correct ownership
+if [ ! -d "$HOME_DIR" ]; then
+    mkdir -p "$HOME_DIR"
+    echo "Created $HOME_DIR"
+fi
+chown $DEPLOY_USER:$DEPLOY_USER "$HOME_DIR"
+chmod 755 "$HOME_DIR"
+
+# Setup .ssh directory
+mkdir -p "$HOME_DIR/.ssh"
+chmod 700 "$HOME_DIR/.ssh"
 
 # Append key and fix permissions
-cat /tmp/deploy_key.pub >> /home/$DEPLOY_USER/.ssh/authorized_keys
-sort -u -o /home/$DEPLOY_USER/.ssh/authorized_keys /home/$DEPLOY_USER/.ssh/authorized_keys
-chmod 600 /home/$DEPLOY_USER/.ssh/authorized_keys
-chmod 700 /home/$DEPLOY_USER/.ssh
-chown -R $DEPLOY_USER:$DEPLOY_USER /home/$DEPLOY_USER/.ssh
+cat /tmp/deploy_key.pub >> "$HOME_DIR/.ssh/authorized_keys"
+sort -u -o "$HOME_DIR/.ssh/authorized_keys" "$HOME_DIR/.ssh/authorized_keys"
+chmod 600 "$HOME_DIR/.ssh/authorized_keys"
+chown -R $DEPLOY_USER:$DEPLOY_USER "$HOME_DIR/.ssh"
 rm -f /tmp/deploy_key.pub
+
+# Fix Ubuntu 22 sshd_config.d overrides — remove any conflicting drop-in configs
+for f in /etc/ssh/sshd_config.d/*.conf; do
+    [ -f "$f" ] || continue
+    if grep -qi "PasswordAuthentication\|PubkeyAuthentication" "$f"; then
+        sed -i 's/^PasswordAuthentication.*/PasswordAuthentication no/' "$f"
+        sed -i '/^PubkeyAuthentication/d' "$f"
+        echo "Fixed override in $f"
+    fi
+done
+
+# Restart sshd to pick up any changes
+systemctl restart sshd
+
+# Verify authorized_keys is readable
+echo "authorized_keys contents:"
+cat "$HOME_DIR/.ssh/authorized_keys"
+echo ""
+echo "Permissions:"
+ls -la "$HOME_DIR/" "$HOME_DIR/.ssh/"
 
 echo "Key deployed for $DEPLOY_USER"
 REMOTE_KEY
+
+# Set server banner
+ssh "${HOST}-root" "printf '\n  ┌──────────────────────────────┐\n  │  %-28s│\n  │  Production Server           │\n  └──────────────────────────────┘\n\n' '${HOST}' > /etc/motd"
+echo "Server banner set"
 
 # Add to local SSH config
 if ! grep -q "^Host ${HOST}-deploy$" ~/.ssh/config 2>/dev/null; then
@@ -118,9 +150,10 @@ if ! grep -q "^Host ${HOST}-deploy$" ~/.ssh/config 2>/dev/null; then
     echo "Added '${HOST}-deploy' to ~/.ssh/config"
 fi
 
-# Verify connection
+# Verify connection (wait for sshd restart to complete)
+sleep 2
 echo "Verifying deploy user SSH access..."
-if ssh -o BatchMode=yes -o ConnectTimeout=5 "${HOST}-deploy" "echo 'SSH key auth works!'" 2>/dev/null; then
+if ssh -o BatchMode=yes -o ConnectTimeout=10 "${HOST}-deploy" "echo 'SSH key auth works!'" 2>/dev/null; then
     echo -e "${GREEN}Deploy user SSH access verified${NC}"
 else
     echo -e "${RED}WARNING: Deploy user SSH access failed!${NC}"
@@ -139,14 +172,19 @@ if command -v docker &>/dev/null; then
     echo "Docker already installed: $(docker --version)"
 else
     echo "Installing Docker..."
-    apt-get update -qq
-    apt-get install -y -qq ca-certificates curl gnupg
+    echo "Waiting for apt lock (up to 120s)..."
+    for i in $(seq 1 60); do
+        fuser /var/lib/dpkg/lock-frontend &>/dev/null || break
+        sleep 2
+    done
+    apt-get update -o DPkg::Lock::Timeout=60 -qq
+    apt-get install -y -qq -o DPkg::Lock::Timeout=60 ca-certificates curl gnupg
     install -m 0755 -d /etc/apt/keyrings
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null
     chmod a+r /etc/apt/keyrings/docker.gpg
     echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" > /etc/apt/sources.list.d/docker.list
     apt-get update -qq
-    apt-get install -y -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    apt-get install -y -qq -o DPkg::Lock::Timeout=60 docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     echo "Docker installed: $(docker --version)"
 fi
 

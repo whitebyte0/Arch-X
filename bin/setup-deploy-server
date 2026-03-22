@@ -79,7 +79,29 @@ echo ""
 
 # ── Step 3: Deploy user SSH key ─────────────────────
 echo -e "${YELLOW}[3/6] Setting up deploy user SSH key...${NC}"
-setup-deploy-sshkey "${HOST}-deploy" "$DEPLOY_USER" "$HOST" "$PORT"
+
+KEYFILE="$HOME/.ssh/${HOST}-deploy"
+
+# Generate key locally if it doesn't exist
+if [[ -f "$KEYFILE" ]]; then
+    echo "Key $KEYFILE already exists, reusing."
+else
+    echo "Generating SSH key: $KEYFILE"
+    ssh-keygen -t ed25519 -f "$KEYFILE" -N "" -C "${HOST}-deploy"
+fi
+
+# Push public key to deploy user via root session (no password needed)
+PUBKEY=$(cat "$KEYFILE.pub")
+ssh "${HOST}-root" "echo '$PUBKEY' >> /home/$DEPLOY_USER/.ssh/authorized_keys && chown $DEPLOY_USER:$DEPLOY_USER /home/$DEPLOY_USER/.ssh/authorized_keys && echo 'Key deployed for $DEPLOY_USER'"
+
+# Add to local SSH config
+if ! grep -q "^Host ${HOST}-deploy$" ~/.ssh/config 2>/dev/null; then
+    printf '\nHost %s-deploy\n    HostName %s\n    User %s\n    Port %s\n    IdentityFile %s\n' \
+        "$HOST" "$HOST" "$DEPLOY_USER" "$PORT" "$KEYFILE" >> ~/.ssh/config
+    echo "Added '${HOST}-deploy' to ~/.ssh/config"
+fi
+
+echo "Done! Connect with: ssh ${HOST}-deploy"
 echo ""
 
 # ── Step 4: Install Docker ──────────────────────────

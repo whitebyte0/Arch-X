@@ -40,7 +40,7 @@ sudo pacman -S --needed --noconfirm \
     xdg-desktop-portal-hyprland \
     ghostty zsh zsh-autosuggestions zsh-syntax-highlighting \
     fzf fd ripgrep eza bat zoxide yazi sshfs lazygit sshs \
-    neovim git docker docker-compose \
+    neovim git docker docker-compose glab \
     ttf-jetbrains-mono-nerd \
     pass pass-otp wl-clipboard gnupg pinentry \
     openssh sshpass libnotify \

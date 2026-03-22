@@ -111,9 +111,6 @@
     },
 
     "hyprland/language": {
-        "format": "󰌌 {}",
-        "format-English (US)": "EN",
-        "format-Russian": "RU",
-        "format-Armenian (phonetic)": "AM"
+        "format": "󰌌 {shortDescription}"
     }
 }

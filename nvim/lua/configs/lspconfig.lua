@@ -1,6 +1,17 @@
 require("nvchad.configs.lspconfig").defaults()
 
-local servers = { "html", "cssls" }
-vim.lsp.enable(servers)
+local servers = {
+  "lua_ls",
+  "gopls",
+  "rust_analyzer",
+  "ts_ls",
+  "intelephense",
+  "html",
+  "cssls",
+  "jsonls",
+  "bashls",
+  "yamlls",
+  "dockerls",
+}
 
--- read :h vim.lsp.config for changing options of lsp servers 
+vim.lsp.enable(servers)

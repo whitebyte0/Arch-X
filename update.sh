@@ -9,6 +9,11 @@
 
 set -e
 
+# Keep sudo alive for the entire script
+sudo -v
+trap 'kill $(jobs -p) 2>/dev/null' EXIT
+while true; do sudo -n true; sleep 50; done &
+
 DOTDIR="$(cd "$(dirname "$0")" && pwd)"
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -36,7 +41,7 @@ sudo pacman -S --needed --noconfirm \
     neovim git docker docker-compose \
     ttf-jetbrains-mono-nerd \
     pass pass-otp wl-clipboard gnupg pinentry \
-    openssh sshpass \
+    openssh sshpass libnotify \
     firefox \
     mesa vulkan-radeon libva-mesa-driver
 

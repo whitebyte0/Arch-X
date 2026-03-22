@@ -1,2 +1,1 @@
-use { 'dougalmiller/golang.nvim' }
-
+-- Plugins are now managed in lua/plugins/init.lua

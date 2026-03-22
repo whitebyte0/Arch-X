@@ -59,6 +59,7 @@ window#waybar {
 #network,
 #pulseaudio,
 #battery,
+#language,
 #custom-power {
     padding: 0 10px;
     margin: 4px 2px;

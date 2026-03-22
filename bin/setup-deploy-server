@@ -57,6 +57,11 @@ else
     echo "User $DEPLOY_USER already exists"
 fi
 
+# Unlock account — useradd without -p creates a locked account
+# sshd refuses key auth for locked users on Ubuntu
+passwd -u "$DEPLOY_USER" 2>/dev/null || usermod -p '*' "$DEPLOY_USER"
+echo "Account unlocked for SSH key auth"
+
 # Add to docker group (will be created when docker is installed)
 usermod -aG sudo "$DEPLOY_USER" 2>/dev/null || true
 
@@ -89,6 +94,10 @@ else
     echo "Generating SSH key: $KEYFILE"
     ssh-keygen -t ed25519 -f "$KEYFILE" -N "" -C "${HOST}-deploy"
 fi
+
+# Ensure the correct key is in the agent (remove stale, add current)
+ssh-add -d "$KEYFILE" 2>/dev/null || true
+ssh-add "$KEYFILE"
 
 # Push public key to deploy user via root session using scp (avoids shell quoting issues)
 scp -o "StrictHostKeyChecking=no" "${KEYFILE}.pub" "${HOST}-root:/tmp/deploy_key.pub"

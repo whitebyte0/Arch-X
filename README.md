@@ -35,7 +35,7 @@ Minimal Arch Linux + Hyprland development environment. One script to go from a f
 
 **SSH Management**
 - `sshs` — interactive SSH host picker (TUI)
-- `ssh-deploy-key <label> <user> <ip>` — generate and deploy SSH key in one command
+- `setup-deploy-sshkey <label> <user> <ip>` — generate and deploy SSH key in one command
 - `mount-ssh <host>` — mount remote filesystem via SSHFS, opens yazi
 - `umount-ssh <host>` — unmount remote filesystem (`--all` to unmount all)
 - `setup-deploy-server <host> <port>` — provision a fresh Ubuntu VPS for deployment
@@ -48,6 +48,7 @@ Minimal Arch Linux + Hyprland development environment. One script to go from a f
 
 **Dev Tools**
 - Docker, lazygit, ripgrep, fd, yazi (file manager)
+- glab (GitLab CLI)
 - Git aliases (gs, ga, gc, gd, gl, gp, gpl)
 
 **Keyboard Layouts**
@@ -183,5 +184,5 @@ LSP servers are installed automatically via Mason on first launch. Run `:Mason` 
 ├── gtk-4.0/            # GTK4 theme settings
 ├── gnupg/              # GPG agent config
 ├── ssh/                # SSH config template
-└── bin/                # CLI tools (ssh-deploy-key, mount-ssh, etc.)
+└── bin/                # CLI tools (setup-deploy-sshkey, mount-ssh, etc.)
 ```

@@ -18,7 +18,20 @@ Minimal Arch Linux + Hyprland development environment. One script to go from a f
 - Zsh with autosuggestions, syntax highlighting, fzf integration
 - Ctrl+R fuzzy history, Ctrl+T file finder, Alt+C directory jumper
 - Zoxide (smart cd), bat (syntax-highlighted cat), eza (modern ls)
-- Neovim (NvChad config with lazy.nvim)
+- Yazi (keyboard-driven file manager with SSHFS support)
+
+**Editor (Neovim)**
+- NvChad base config with lazy.nvim
+- LSP support: Go, Rust, TypeScript, JavaScript, PHP, HTML, CSS, JSON, YAML, Bash, Docker
+- Mason for automatic LSP/formatter installation
+- Treesitter syntax highlighting for all languages
+- Format on save (gofmt, rustfmt, prettier, php_cs_fixer)
+- render-markdown.nvim (inline markdown rendering)
+- todo-comments.nvim (highlight TODO, FIXME, HACK, BUG)
+- trouble.nvim (diagnostics panel)
+- which-key.nvim (keybinding hints popup)
+- gitsigns.nvim (git diff in gutter)
+- nvim-autopairs, nvim-surround, Comment.nvim
 
 **SSH Management**
 - `s` — interactive SSH host picker (fzf + ~/.ssh/config)
@@ -77,13 +90,13 @@ git clone https://github.com/whitebyte0/Arch-X.git ~/Arch-X
 cd ~/Arch-X && ./install.sh
 ```
 
-The script will ask for your password once, then handle everything:
+The script asks for your password once, then handles everything:
 - Installs all packages (pacman + yay for AUR)
 - Symlinks all configs to `~/.config/`
 - Sets zsh as default shell
 - Enables ssh-agent, Docker
 - Applies GTK dark theme
-- Installs Neovim plugins
+- Installs Neovim plugins and LSP servers
 
 ### 4. Reboot
 
@@ -135,6 +148,19 @@ This syncs packages, verifies symlinks, and reloads Hyprland, Waybar, and Dunst 
 | Ctrl+T | Fuzzy file finder |
 | Alt+C | Fuzzy directory jump |
 
+## Neovim
+
+LSP servers are installed automatically via Mason on first launch. Run `:Mason` to manage them.
+
+| Key | Action |
+|-----|--------|
+| gd | Go to definition |
+| K | Hover info |
+| gcc | Toggle comment |
+| cs"' | Change surrounding `"` to `'` |
+| :Trouble | Open diagnostics panel |
+| :TodoTelescope | Search TODO/FIXME comments |
+
 ## Structure
 
 ```
@@ -149,7 +175,7 @@ This syncs packages, verifies symlinks, and reloads Hyprland, Waybar, and Dunst 
 ├── wofi/               # App launcher
 ├── dunst/              # Notifications
 ├── wlogout/            # Power menu
-├── nvim/               # Neovim (NvChad)
+├── nvim/               # Neovim (NvChad + plugins)
 ├── gtk-3.0/            # GTK3 theme settings
 ├── gtk-4.0/            # GTK4 theme settings
 ├── gnupg/              # GPG agent config

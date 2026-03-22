@@ -93,3 +93,4 @@ eval "$(zoxide init zsh)"        # z <partial-dir> to jump
 alias cat='bat --paging=never'   # syntax-highlighted cat
 export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"
+grep -rl "PRIVATE KEY" ~/.ssh/ 2>/dev/null | grep -v '\.pub$' | xargs -r ssh-add 2>/dev/null

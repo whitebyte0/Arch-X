@@ -45,7 +45,22 @@ sudo pacman -S --needed --noconfirm \
     pass pass-otp wl-clipboard gnupg pinentry \
     openssh sshpass libnotify \
     firefox \
-    mesa vulkan-radeon libva-mesa-driver
+    mesa
+
+# GPU drivers — auto-detect
+GPU_VENDOR=$(lspci -nn | grep -i vga)
+if echo "$GPU_VENDOR" | grep -qi nvidia; then
+    info "Detected NVIDIA GPU"
+    sudo pacman -S --needed --noconfirm nvidia nvidia-utils lib32-nvidia-utils
+elif echo "$GPU_VENDOR" | grep -qi amd; then
+    info "Detected AMD GPU"
+    sudo pacman -S --needed --noconfirm vulkan-radeon libva-mesa-driver
+elif echo "$GPU_VENDOR" | grep -qi intel; then
+    info "Detected Intel GPU"
+    sudo pacman -S --needed --noconfirm vulkan-intel intel-media-driver
+else
+    warn "Could not detect GPU — install drivers manually"
+fi
 
 # AUR packages
 if command -v yay &>/dev/null; then

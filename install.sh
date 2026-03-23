@@ -44,7 +44,27 @@ sudo pacman -S --needed --noconfirm \
     pass pass-otp wl-clipboard gnupg pinentry \
     openssh sshpass libnotify \
     firefox \
-    mesa vulkan-radeon libva-mesa-driver
+    mesa
+
+# GPU drivers — auto-detect
+GPU_VENDOR=$(lspci -nn | grep -i vga)
+if echo "$GPU_VENDOR" | grep -qi nvidia; then
+    info "Detected NVIDIA GPU"
+    sudo pacman -S --needed --noconfirm nvidia nvidia-utils lib32-nvidia-utils
+    # Enable DRM kernel mode setting for Hyprland
+    if ! grep -q "nvidia_drm.modeset=1" /etc/default/grub 2>/dev/null; then
+        warn "Add 'nvidia_drm.modeset=1' to kernel params for Hyprland"
+    fi
+elif echo "$GPU_VENDOR" | grep -qi amd; then
+    info "Detected AMD GPU"
+    sudo pacman -S --needed --noconfirm vulkan-radeon libva-mesa-driver
+elif echo "$GPU_VENDOR" | grep -qi intel; then
+    info "Detected Intel GPU"
+    sudo pacman -S --needed --noconfirm vulkan-intel intel-media-driver
+else
+    warn "Could not detect GPU vendor — install drivers manually"
+    info "GPU info: $GPU_VENDOR"
+fi
 
 # AUR packages (requires yay)
 if command -v yay &>/dev/null; then

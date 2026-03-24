@@ -39,12 +39,12 @@ sudo pacman -S --needed --noconfirm \
     hyprland waybar dunst wofi hyprlock grim slurp wf-recorder nwg-look \
     xdg-desktop-portal-hyprland \
     ghostty zsh zsh-autosuggestions zsh-syntax-highlighting \
-    fzf fd ripgrep eza bat zoxide yazi sshfs lazygit sshs \
-    neovim git docker docker-compose glab \
+    fzf fd ripgrep eza bat zoxide yazi sshfs lazygit sshs jq qt5-wayland qt6-wayland \
+    neovim git docker docker-compose glab github-cli \
     ttf-jetbrains-mono-nerd \
     pass pass-otp wl-clipboard gnupg pinentry \
     openssh sshpass libnotify \
-    firefox \
+    firefox telegram-desktop python-pipx \
     mesa
 
 # GPU drivers — auto-detect
@@ -56,7 +56,7 @@ if echo "$GPU_VENDOR" | grep -qi nvidia; then
         sudo sed -i '/^#\[multilib\]/,/^#Include/ s/^#//' /etc/pacman.conf
         sudo pacman -Sy
     fi
-    sudo pacman -S --needed --noconfirm nvidia-dkms nvidia-utils lib32-nvidia-utils
+    sudo pacman -S --needed --noconfirm linux-headers nvidia-dkms nvidia-utils lib32-nvidia-utils
     # NVIDIA env vars for Hyprland
     mkdir -p "$HOME/.config/hypr"
     cat > "$HOME/.config/hypr/gpu.conf" << 'GPUEOF'
@@ -99,7 +99,7 @@ fi
 
 # AUR packages
 if command -v yay &>/dev/null; then
-    yay -S --needed --noconfirm wlogout adw-gtk3
+    yay -S --needed --noconfirm wlogout adw-gtk3 signal-desktop
 else
     warn "yay not found — skipping AUR packages"
 fi

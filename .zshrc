@@ -81,7 +81,7 @@ alias d='dirs -v | head -15'
 alias rg='rg --smart-case'
 
 # ── Custom scripts ──────────────────────────────────
-export PATH="$HOME/Arch-X/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/Arch-X/bin:$PATH"
 
 # ── Autosuggestions color ────────────────────────────
 ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE="fg=#444444"

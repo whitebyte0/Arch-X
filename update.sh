@@ -45,6 +45,7 @@ sudo pacman -S --needed --noconfirm \
     pass pass-otp wl-clipboard gnupg pinentry \
     openssh sshpass libnotify \
     firefox telegram-desktop python-pipx \
+    nodejs npm uv \
     mesa
 
 # GPU drivers — auto-detect

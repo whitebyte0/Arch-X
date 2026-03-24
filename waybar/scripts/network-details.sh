@@ -1,13 +1,8 @@
 #!/bin/bash
 # network-details.sh — detailed network info popup (right-click)
 
-GREEN='#a6e3a1'
-BLUE='#89b4fa'
-DIM='#6c7086'
+source "$(dirname "$0")/lib.sh"
 ID=91002
-
-sanitize() { sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'; }
-section() { echo "<span color='${1}'><b>$2</b></span>"; }
 
 msg=""
 

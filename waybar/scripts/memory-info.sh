@@ -1,14 +1,8 @@
 #!/bin/bash
 # memory-info.sh — Memory info popup for waybar
 
-GREEN='#a6e3a1'
-YELLOW='#f9e2af'
-BLUE='#89b4fa'
-DIM='#6c7086'
+source "$(dirname "$0")/lib.sh"
 ID=91004
-
-sanitize() { sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'; }
-section() { echo "<span color='${1}'><b>$2</b></span>"; }
 
 msg=""
 

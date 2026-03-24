@@ -40,6 +40,10 @@ install_aur_packages() {
 
 # ─── GPU auto-detection ──────────────────────────────
 setup_gpu() {
+    mkdir -p "$HOME/.config/hypr-local"
+    # Ensure source files exist so Hyprland doesn't error
+    [ -f "$HOME/.config/hypr-local/monitors.conf" ] || : > "$HOME/.config/hypr-local/monitors.conf"
+
     local GPU_VENDOR
     GPU_VENDOR=$(lspci -nn | grep -i vga)
 
@@ -50,19 +54,21 @@ setup_gpu() {
             sudo pacman -Sy
         fi
         sudo pacman -S --needed --noconfirm linux-headers nvidia-dkms nvidia-utils lib32-nvidia-utils
-        mkdir -p "$HOME/.config/hypr"
-        cat > "$HOME/.config/hypr/gpu.conf" << 'GPUEOF'
+        mkdir -p "$HOME/.config/hypr-local"
+        cat > "$HOME/.config/hypr-local/gpu.conf" << 'GPUEOF'
 env = LIBVA_DRIVER_NAME,nvidia
 env = __GLX_VENDOR_LIBRARY_NAME,nvidia
 env = GBM_BACKEND,nvidia-drm
 env = WLR_NO_HARDWARE_CURSORS,1
 env = NVD_BACKEND,direct
 GPUEOF
-        info "Created ~/.config/hypr/gpu.conf with NVIDIA env vars"
+        info "Created ~/.config/hypr-local/gpu.conf with NVIDIA env vars"
         if ! grep -q "nvidia_drm.modeset=1" /proc/cmdline; then
             if [ -f /etc/kernel/cmdline ]; then
                 sudo sed -i 's/$/ nvidia_drm.modeset=1/' /etc/kernel/cmdline
-                sudo reinstall-kernels 2>/dev/null || sudo mkinitcpio -P
+                sudo reinstall-kernels 2>/dev/null || \
+                    sudo kernel-install add "$(uname -r)" /usr/lib/modules/"$(uname -r)"/vmlinuz 2>/dev/null || \
+                    sudo mkinitcpio -P
                 info "Added nvidia_drm.modeset=1 to /etc/kernel/cmdline"
             elif [ -f /etc/default/grub ]; then
                 sudo sed -i 's/\(GRUB_CMDLINE_LINUX_DEFAULT="[^"]*\)/\1 nvidia_drm.modeset=1/' /etc/default/grub
@@ -76,15 +82,15 @@ GPUEOF
     elif echo "$GPU_VENDOR" | grep -qi amd; then
         info "Detected AMD GPU"
         sudo pacman -S --needed --noconfirm vulkan-radeon libva-mesa-driver
-        mkdir -p "$HOME/.config/hypr" && : > "$HOME/.config/hypr/gpu.conf"
+        mkdir -p "$HOME/.config/hypr-local" && : > "$HOME/.config/hypr-local/gpu.conf"
     elif echo "$GPU_VENDOR" | grep -qi intel; then
         info "Detected Intel GPU"
         sudo pacman -S --needed --noconfirm vulkan-intel intel-media-driver
-        mkdir -p "$HOME/.config/hypr" && : > "$HOME/.config/hypr/gpu.conf"
+        mkdir -p "$HOME/.config/hypr-local" && : > "$HOME/.config/hypr-local/gpu.conf"
     else
         warn "Could not detect GPU vendor — install drivers manually"
         info "GPU info: $GPU_VENDOR"
-        mkdir -p "$HOME/.config/hypr" && : > "$HOME/.config/hypr/gpu.conf"
+        mkdir -p "$HOME/.config/hypr-local" && : > "$HOME/.config/hypr-local/gpu.conf"
     fi
 }
 

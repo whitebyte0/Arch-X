@@ -7,7 +7,8 @@
 
 set -e
 
-CONF="$HOME/.config/hypr/monitors.conf"
+CONF="$HOME/.config/hypr-local/monitors.conf"
+mkdir -p "$HOME/.config/hypr-local"
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'

@@ -68,14 +68,21 @@ env = NVD_BACKEND,direct
 GPUEOF
     info "Created ~/.config/hypr/gpu.conf with NVIDIA env vars"
     # Enable DRM kernel mode setting for Hyprland
-    if [ -f /etc/default/grub ]; then
-        if ! grep -q "nvidia_drm.modeset=1" /etc/default/grub; then
+    if ! grep -q "nvidia_drm.modeset=1" /proc/cmdline; then
+        if [ -f /etc/kernel/cmdline ]; then
+            # systemd-boot with unified kernel images
+            sudo sed -i 's/$/ nvidia_drm.modeset=1/' /etc/kernel/cmdline
+            sudo reinstall-kernels 2>/dev/null || sudo mkinitcpio -P
+            info "Added nvidia_drm.modeset=1 to /etc/kernel/cmdline"
+        elif [ -f /etc/default/grub ]; then
+            # GRUB
             sudo sed -i 's/\(GRUB_CMDLINE_LINUX_DEFAULT="[^"]*\)/\1 nvidia_drm.modeset=1/' /etc/default/grub
             sudo grub-mkconfig -o /boot/grub/grub.cfg
-            info "Added nvidia_drm.modeset=1 to kernel params"
+            info "Added nvidia_drm.modeset=1 to GRUB config"
+        else
+            warn "Could not detect bootloader — add 'nvidia_drm.modeset=1' to kernel params manually"
         fi
-    else
-        warn "No /etc/default/grub found — add 'nvidia_drm.modeset=1' to your bootloader manually"
+        warn "Reboot required for nvidia_drm.modeset=1 to take effect"
     fi
 elif echo "$GPU_VENDOR" | grep -qi amd; then
     info "Detected AMD GPU"

@@ -50,7 +50,12 @@ sudo pacman -S --needed --noconfirm \
 GPU_VENDOR=$(lspci -nn | grep -i vga)
 if echo "$GPU_VENDOR" | grep -qi nvidia; then
     info "Detected NVIDIA GPU"
-    sudo pacman -S --needed --noconfirm nvidia nvidia-utils lib32-nvidia-utils
+    # Enable multilib repo for 32-bit NVIDIA libs
+    if ! grep -q "^\[multilib\]" /etc/pacman.conf; then
+        sudo sed -i '/^#\[multilib\]/,/^#Include/ s/^#//' /etc/pacman.conf
+        sudo pacman -Sy
+    fi
+    sudo pacman -S --needed --noconfirm nvidia-dkms nvidia-utils lib32-nvidia-utils
     # Enable DRM kernel mode setting for Hyprland
     if ! grep -q "nvidia_drm.modeset=1" /etc/default/grub 2>/dev/null; then
         warn "Add 'nvidia_drm.modeset=1' to kernel params for Hyprland"

@@ -1,0 +1,83 @@
+# Hyprland + desktop
+hyprland
+waybar
+dunst
+wofi
+hyprlock
+hypridle
+hyprpaper
+grim
+slurp
+wf-recorder
+nwg-look
+xdg-desktop-portal-hyprland
+
+# Terminal + shell
+ghostty
+zsh
+zsh-autosuggestions
+zsh-syntax-highlighting
+
+# CLI tools
+fzf
+fd
+ripgrep
+eza
+bat
+zoxide
+yazi
+sshfs
+lazygit
+sshs
+jq
+qt5-wayland
+qt6-wayland
+
+# Development
+neovim
+git
+docker
+docker-compose
+glab
+github-cli
+nodejs
+npm
+uv
+
+# Fonts
+ttf-jetbrains-mono-nerd
+
+# Security + passwords
+pass
+pass-otp
+wl-clipboard
+cliphist
+gnupg
+pinentry
+
+# Network + system
+openssh
+sshpass
+libnotify
+
+# Applications
+firefox
+telegram-desktop
+python-pipx
+
+# Graphics (base)
+mesa
+
+# Hardware keys
+brightnessctl
+playerctl
+
+# Bluetooth
+bluez
+bluez-utils
+
+# SDDM display manager
+sddm
+qt6-5compat
+qt6-declarative
+qt6-svg

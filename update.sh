@@ -8,22 +8,8 @@
 # Safe to run repeatedly — only applies changes, skips what's already done.
 
 set -e
-
-# Keep sudo alive for the entire script
-sudo -v
-SUDO_PID=
-while true; do sudo -n true; sleep 50; done &
-SUDO_PID=$!
-trap 'kill $SUDO_PID 2>/dev/null' EXIT
-
-DOTDIR="$(cd "$(dirname "$0")" && pwd)"
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
-
-step() { echo -e "\n${GREEN}[$1]${NC} $2"; }
-warn() { echo -e "${YELLOW}  ⚠ $1${NC}"; }
-info() { echo -e "  $1"; }
+source "$(dirname "$0")/lib/common.sh"
+sudo_keepalive
 
 echo ""
 echo "  ╔══════════════════════════════════════╗"
@@ -31,83 +17,17 @@ echo "  ║         Arch-X Update                ║"
 echo "  ╚══════════════════════════════════════╝"
 echo ""
 
-# ─── [1/5] Packages ──────────────────────────────────
+# ─── [1/6] Packages ──────────────────────────────────
 
-step "1/5" "Syncing packages..."
+step "1/6" "Syncing packages..."
 
-sudo pacman -S --needed --noconfirm \
-    hyprland waybar dunst wofi hyprlock grim slurp wf-recorder nwg-look \
-    xdg-desktop-portal-hyprland \
-    ghostty zsh zsh-autosuggestions zsh-syntax-highlighting \
-    fzf fd ripgrep eza bat zoxide yazi sshfs lazygit sshs jq qt5-wayland qt6-wayland \
-    neovim git docker docker-compose glab github-cli \
-    ttf-jetbrains-mono-nerd \
-    pass pass-otp wl-clipboard gnupg pinentry \
-    openssh sshpass libnotify \
-    firefox telegram-desktop python-pipx \
-    nodejs npm uv \
-    mesa
+install_packages
+setup_gpu
+install_aur_packages || warn "yay not found — skipping AUR packages"
 
-# GPU drivers — auto-detect
-GPU_VENDOR=$(lspci -nn | grep -i vga)
-if echo "$GPU_VENDOR" | grep -qi nvidia; then
-    info "Detected NVIDIA GPU"
-    # Enable multilib repo for 32-bit NVIDIA libs
-    if ! grep -q "^\[multilib\]" /etc/pacman.conf; then
-        sudo sed -i '/^#\[multilib\]/,/^#Include/ s/^#//' /etc/pacman.conf
-        sudo pacman -Sy
-    fi
-    sudo pacman -S --needed --noconfirm linux-headers nvidia-dkms nvidia-utils lib32-nvidia-utils
-    # NVIDIA env vars for Hyprland
-    mkdir -p "$HOME/.config/hypr"
-    cat > "$HOME/.config/hypr/gpu.conf" << 'GPUEOF'
-env = LIBVA_DRIVER_NAME,nvidia
-env = __GLX_VENDOR_LIBRARY_NAME,nvidia
-env = GBM_BACKEND,nvidia-drm
-env = WLR_NO_HARDWARE_CURSORS,1
-env = NVD_BACKEND,direct
-GPUEOF
-    info "Created ~/.config/hypr/gpu.conf with NVIDIA env vars"
-    # Enable DRM kernel mode setting for Hyprland
-    if ! grep -q "nvidia_drm.modeset=1" /proc/cmdline; then
-        if [ -f /etc/kernel/cmdline ]; then
-            # systemd-boot with unified kernel images
-            sudo sed -i 's/$/ nvidia_drm.modeset=1/' /etc/kernel/cmdline
-            sudo reinstall-kernels 2>/dev/null || sudo mkinitcpio -P
-            info "Added nvidia_drm.modeset=1 to /etc/kernel/cmdline"
-        elif [ -f /etc/default/grub ]; then
-            # GRUB
-            sudo sed -i 's/\(GRUB_CMDLINE_LINUX_DEFAULT="[^"]*\)/\1 nvidia_drm.modeset=1/' /etc/default/grub
-            sudo grub-mkconfig -o /boot/grub/grub.cfg
-            info "Added nvidia_drm.modeset=1 to GRUB config"
-        else
-            warn "Could not detect bootloader — add 'nvidia_drm.modeset=1' to kernel params manually"
-        fi
-        warn "Reboot required for nvidia_drm.modeset=1 to take effect"
-    fi
-elif echo "$GPU_VENDOR" | grep -qi amd; then
-    info "Detected AMD GPU"
-    sudo pacman -S --needed --noconfirm vulkan-radeon libva-mesa-driver
-    mkdir -p "$HOME/.config/hypr" && : > "$HOME/.config/hypr/gpu.conf"
-elif echo "$GPU_VENDOR" | grep -qi intel; then
-    info "Detected Intel GPU"
-    sudo pacman -S --needed --noconfirm vulkan-intel intel-media-driver
-    mkdir -p "$HOME/.config/hypr" && : > "$HOME/.config/hypr/gpu.conf"
-else
-    warn "Could not detect GPU — install drivers manually"
-    mkdir -p "$HOME/.config/hypr" && : > "$HOME/.config/hypr/gpu.conf"
-fi
+# ─── [2/6] Symlinks ──────────────────────────────────
 
-# AUR packages
-if command -v yay &>/dev/null; then
-    yay -S --needed --noconfirm wlogout adw-gtk3 signal-desktop
-else
-    warn "yay not found — skipping AUR packages"
-fi
-
-# ─── [2/5] Symlinks ──────────────────────────────────
-
-step "2/5" "Verifying symlinks..."
+step "2/6" "Verifying symlinks..."
 
 mkdir -p "$HOME/.config"
 
@@ -124,7 +44,7 @@ for dir in hypr waybar ghostty wofi dunst wlogout nvim gtk-3.0 gtk-4.0; do
 done
 
 # Home dotfiles
-for file in .zshrc .zprofile; do
+for file in .zshrc; do
     if [ -L "$HOME/$file" ] && [ "$(readlink -f "$HOME/$file")" = "$DOTDIR/$file" ]; then
         info "~/$file ✓"
     else
@@ -141,18 +61,23 @@ mkdir -p "$HOME/.gnupg" && chmod 700 "$HOME/.gnupg"
 ln -sf "$DOTDIR/gnupg/gpg-agent.conf" "$HOME/.gnupg/gpg-agent.conf"
 info "~/.gnupg/gpg-agent.conf ✓"
 
-# ─── [3/5] Permissions ───────────────────────────────
+# ─── [3/6] SDDM theme ────────────────────────────────
 
-step "3/5" "Setting permissions..."
+step "3/6" "Updating SDDM theme..."
+
+install_sddm_theme
+
+# ─── [4/6] Permissions ───────────────────────────────
+
+step "4/6" "Setting permissions..."
 
 chmod +x "$DOTDIR/waybar/scripts/"*.sh 2>/dev/null || true
 chmod +x "$DOTDIR/bin/"* 2>/dev/null || true
-info "Waybar scripts ✓"
-info "Bin scripts ✓"
+info "Scripts ✓"
 
-# ─── [4/5] Reload services ───────────────────────────
+# ─── [5/6] Reload services ───────────────────────────
 
-step "4/5" "Reloading services..."
+step "5/6" "Reloading services..."
 
 # Reload Hyprland config
 hyprctl reload 2>/dev/null && info "Hyprland reloaded" || warn "Hyprland not running"
@@ -165,10 +90,9 @@ hyprctl dispatch exec waybar 2>/dev/null
 hyprctl dispatch exec dunst 2>/dev/null
 info "Waybar and Dunst restarted"
 
-# Reload zsh config for current shell
 info "Run 'source ~/.zshrc' to apply shell changes"
 
-# ─── [5/5] Done ──────────────────────────────────────
+# ─── [6/6] Done ──────────────────────────────────────
 
-step "5/5" "Update complete!"
+step "6/6" "Update complete!"
 echo ""

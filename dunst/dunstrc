@@ -31,6 +31,9 @@
     notification_limit = 5
     indicate_hidden = yes
 
+    history_length = 50
+    sticky_history = yes
+
     mouse_left_click = do_action, open_url
     mouse_middle_click = close_all
     mouse_right_click = close_current

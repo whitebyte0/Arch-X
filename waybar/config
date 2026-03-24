@@ -7,7 +7,7 @@
 
     "modules-left": ["hyprland/workspaces", "hyprland/taskbar"],
     "modules-center": ["clock"],
-    "modules-right": ["tray", "custom/recording", "hyprland/language", "cpu", "memory", "temperature", "battery", "network", "pulseaudio", "custom/power"],
+    "modules-right": ["tray", "custom/recording", "hyprland/language", "cpu", "memory", "temperature", "battery", "bluetooth", "network", "pulseaudio", "custom/power"],
 
     "tray": {
         "icon-size": 16,
@@ -108,6 +108,18 @@
         "tooltip-format": "{title}",
         "on-click": "activate",
         "on-click-middle": "close"
+    },
+
+    "bluetooth": {
+        "format": "󰂯 {status}",
+        "format-connected": "󰂯 {device_alias}",
+        "format-connected-battery": "󰂯 {device_alias} {device_battery_percentage}%",
+        "format-disabled": "󰂲",
+        "format-off": "󰂲",
+        "on-click": "ghostty -e bluetuith",
+        "tooltip-format": "{controller_alias}\n{num_connections} connected",
+        "tooltip-format-connected": "{controller_alias}\n{num_connections} connected\n\n{device_enumerate}",
+        "tooltip-format-enumerate-connected": "{device_alias}\t{device_battery_percentage}%"
     },
 
     "hyprland/language": {

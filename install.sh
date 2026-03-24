@@ -57,6 +57,7 @@ if echo "$GPU_VENDOR" | grep -qi nvidia; then
     fi
     sudo pacman -S --needed --noconfirm nvidia-dkms nvidia-utils lib32-nvidia-utils
     # NVIDIA env vars for Hyprland
+    mkdir -p "$HOME/.config/hypr"
     cat > "$HOME/.config/hypr/gpu.conf" << 'GPUEOF'
 env = LIBVA_DRIVER_NAME,nvidia
 env = __GLX_VENDOR_LIBRARY_NAME,nvidia
@@ -78,15 +79,15 @@ GPUEOF
 elif echo "$GPU_VENDOR" | grep -qi amd; then
     info "Detected AMD GPU"
     sudo pacman -S --needed --noconfirm vulkan-radeon libva-mesa-driver
-    : > "$HOME/.config/hypr/gpu.conf"
+    mkdir -p "$HOME/.config/hypr" && : > "$HOME/.config/hypr/gpu.conf"
 elif echo "$GPU_VENDOR" | grep -qi intel; then
     info "Detected Intel GPU"
     sudo pacman -S --needed --noconfirm vulkan-intel intel-media-driver
-    : > "$HOME/.config/hypr/gpu.conf"
+    mkdir -p "$HOME/.config/hypr" && : > "$HOME/.config/hypr/gpu.conf"
 else
     warn "Could not detect GPU vendor — install drivers manually"
     info "GPU info: $GPU_VENDOR"
-    : > "$HOME/.config/hypr/gpu.conf"
+    mkdir -p "$HOME/.config/hypr" && : > "$HOME/.config/hypr/gpu.conf"
 fi
 
 # AUR packages (requires yay)

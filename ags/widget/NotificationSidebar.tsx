@@ -2,10 +2,13 @@ import app from "ags/gtk4/app"
 import { Astal, Gtk, Gdk } from "ags/gtk4"
 import { createState, createComputed, For } from "ags"
 import GLib from "gi://GLib"
+
+const pointer = new Gdk.Cursor({ name: "pointer" })
 import {
   notifd,
   dnd,
   toggleDnd,
+  clickClose,
   history,
   dismissNotification,
   clearHistory,
@@ -25,15 +28,32 @@ export function toggleSidebar() {
   setSidebarVisible(!sidebarVisible.peek())
 }
 
+function closeSidebar() {
+  setSidebarVisible(false)
+}
+
+const scrimVisible = createComputed(() => sidebarVisible() && clickClose())
+
 function NotificationItem(entry: HistoryEntry) {
   const timeLabel = createComputed(() => {
     tick()
     return relativeTime(entry.time)
   })
 
-  const bodyStripped = entry.body
-    ? entry.body.replace(/<[^>]*>/g, "").replace(/\n/g, " ")
+  const bodyFull = entry.body
+    ? entry.body.replace(/<[^>]*>/g, "")
     : ""
+
+  const isLong = bodyFull.length > 120
+  const [expanded, setExpanded] = createState(false)
+
+  const bodyText = expanded.as((exp) => {
+    if (!bodyFull) return ""
+    if (exp || !isLong) return bodyFull
+    return bodyFull.slice(0, 120) + "…"
+  })
+
+  const expandIcon = expanded.as((exp) => exp ? "󰁝" : "󰁅")
 
   return (
     <box orientation={Gtk.Orientation.VERTICAL} cssClasses={["notification-item"]}>
@@ -42,9 +62,10 @@ function NotificationItem(entry: HistoryEntry) {
         <label label={timeLabel} cssClasses={["notification-time"]} hexpand xalign={1} />
         <button
           cssClasses={["notification-dismiss"]}
+          cursor={pointer}
           onClicked={() => dismissNotification(entry.id)}
         >
-          <label label="✕" />
+          <label label="󰅖" />
         </button>
       </box>
       <label
@@ -54,14 +75,28 @@ function NotificationItem(entry: HistoryEntry) {
         ellipsize={3}
         maxWidthChars={45}
       />
-      {bodyStripped ? (
-        <label
-          label={bodyStripped}
-          cssClasses={["notification-item-body"]}
-          xalign={0}
-          wrap
-          maxWidthChars={45}
-        />
+      {bodyFull ? (
+        <box orientation={Gtk.Orientation.VERTICAL}>
+          <label
+            label={bodyText}
+            cssClasses={["notification-item-body"]}
+            xalign={0}
+            wrap
+            maxWidthChars={45}
+          />
+          {isLong ? (
+            <button
+              cssClasses={["notification-expand"]}
+              cursor={pointer}
+              onClicked={() => setExpanded(!expanded.peek())}
+              halign={Gtk.Align.START}
+            >
+              <label label={expandIcon} />
+            </button>
+          ) : (
+            <box />
+          )}
+        </box>
       ) : (
         <box />
       )}
@@ -70,6 +105,7 @@ function NotificationItem(entry: HistoryEntry) {
           {entry.actions.map((action) => (
             <button
               cssClasses={["notification-action"]}
+              cursor={pointer}
               onClicked={() => {
                 const n = notifd.get_notification(entry.id)
                 if (n) n.invoke(action.id)
@@ -87,7 +123,7 @@ function NotificationItem(entry: HistoryEntry) {
 }
 
 export default function NotificationSidebar(gdkmonitor: Gdk.Monitor) {
-  const { TOP, RIGHT, BOTTOM } = Astal.WindowAnchor
+  const { TOP, LEFT, RIGHT, BOTTOM } = Astal.WindowAnchor
 
   const count = history.as((h) => {
     const len = h.length
@@ -99,7 +135,31 @@ export default function NotificationSidebar(gdkmonitor: Gdk.Monitor) {
     d ? ["dnd-toggle", "active"] : ["dnd-toggle"]
   )
 
-  return (
+  // transparent scrim — click to close sidebar
+  const scrim = (
+    <window
+      visible={scrimVisible}
+      name="notification-scrim"
+      cssClasses={["notification-scrim"]}
+      gdkmonitor={gdkmonitor}
+      exclusivity={Astal.Exclusivity.NORMAL}
+      anchor={TOP | LEFT | RIGHT | BOTTOM}
+      layer={Astal.Layer.TOP}
+      application={app}
+      keymode={Astal.Keymode.NONE}
+    >
+      <button
+        hexpand
+        vexpand
+        cssClasses={["scrim-button"]}
+        onClicked={() => closeSidebar()}
+      >
+        <box />
+      </button>
+    </window>
+  )
+
+  const sidebar = (
     <window
       visible={sidebarVisible}
       name="notification-sidebar"
@@ -109,17 +169,17 @@ export default function NotificationSidebar(gdkmonitor: Gdk.Monitor) {
       anchor={TOP | RIGHT | BOTTOM}
       layer={Astal.Layer.TOP}
       application={app}
-      keymode={Astal.Keymode.ON_DEMAND}
+      keymode={Astal.Keymode.NONE}
     >
       <box orientation={Gtk.Orientation.VERTICAL} cssClasses={["sidebar-container"]} widthRequest={380}>
         <box cssClasses={["sidebar-header"]}>
           <label label="Notifications" cssClasses={["sidebar-title"]} />
           <box hexpand halign={Gtk.Align.END}>
-            <button cssClasses={dndClasses} onClicked={() => toggleDnd()}>
+            <button cssClasses={dndClasses} cursor={pointer} onClicked={() => toggleDnd()}>
               <label label={dndIcon} />
             </button>
-            <button cssClasses={["clear-all"]} onClicked={() => clearHistory()}>
-              <label label="Clear" />
+            <button cssClasses={["clear-all"]} cursor={pointer} onClicked={() => clearHistory()}>
+              <label label="󰩺" />
             </button>
           </box>
         </box>
@@ -136,4 +196,6 @@ export default function NotificationSidebar(gdkmonitor: Gdk.Monitor) {
       </box>
     </window>
   )
+
+  return [scrim, sidebar]
 }

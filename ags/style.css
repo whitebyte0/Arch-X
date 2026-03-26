@@ -51,6 +51,17 @@ window.urgency-critical .body {
     color: #e0e0e0;
 }
 
+/* ── Sidebar Scrim ────────────────────────────── */
+
+window.notification-scrim {
+    background: transparent;
+}
+
+.scrim-button {
+    background: transparent;
+    border: none;
+}
+
 /* ── Notification Sidebar ─────────────────────── */
 
 window.notification-sidebar {
@@ -63,7 +74,7 @@ window.notification-sidebar {
 }
 
 .sidebar-header {
-    padding: 16px 16px 12px;
+    padding: 10px 16px 8px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
@@ -79,11 +90,12 @@ window.notification-sidebar {
     background: rgba(255, 255, 255, 0.05);
     border: none;
     border-radius: 4px;
-    padding: 4px 10px;
+    padding: 6px 12px;
     font-family: "JetBrainsMono Nerd Font", monospace;
-    font-size: 10px;
+    font-size: 14px;
     color: #808080;
     margin-left: 8px;
+
 }
 
 .dnd-toggle:hover,
@@ -103,8 +115,8 @@ window.notification-sidebar {
 .notification-item {
     background: rgba(255, 255, 255, 0.03);
     border-radius: 6px;
-    padding: 10px 12px;
-    margin-bottom: 6px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
 }
 
 .notification-item:hover {
@@ -117,40 +129,56 @@ window.notification-sidebar {
 
 .notification-app-name {
     font-family: "JetBrainsMono Nerd Font", monospace;
-    font-size: 10px;
+    font-size: 11px;
     color: #89b4fa;
 }
 
 .notification-time {
     font-family: "JetBrainsMono Nerd Font", monospace;
-    font-size: 10px;
+    font-size: 11px;
     color: #808080;
 }
 
 .notification-item-summary {
     font-family: "JetBrainsMono Nerd Font", monospace;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: bold;
     color: #e0e0e0;
 }
 
 .notification-item-body {
     font-family: "JetBrainsMono Nerd Font", monospace;
-    font-size: 11px;
+    font-size: 12px;
     color: #808080;
-    margin-top: 2px;
+    margin-top: 4px;
 }
 
 .notification-dismiss {
-    background: transparent;
+    background: rgba(255, 255, 255, 0.03);
     border: none;
+    border-radius: 4px;
     color: #808080;
-    font-size: 11px;
-    padding: 0 4px;
+    font-size: 14px;
+    padding: 4px 8px;
+    margin-left: 20px;
+
 }
 
 .notification-dismiss:hover {
     color: #f38ba8;
+}
+
+.notification-expand {
+    background: transparent;
+    border: none;
+    color: #6c7086;
+    font-size: 12px;
+    padding: 2px 4px;
+    margin-top: 2px;
+}
+
+.notification-expand:hover {
+    color: #e0e0e0;
 }
 
 .notification-actions {
@@ -161,11 +189,12 @@ window.notification-sidebar {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 4px;
-    padding: 3px 10px;
+    padding: 4px 12px;
     font-family: "JetBrainsMono Nerd Font", monospace;
-    font-size: 10px;
+    font-size: 11px;
     color: #89b4fa;
     margin-right: 6px;
+
 }
 
 .notification-action:hover {
@@ -179,6 +208,6 @@ window.notification-sidebar {
 
 .sidebar-count {
     font-family: "JetBrainsMono Nerd Font", monospace;
-    font-size: 10px;
+    font-size: 11px;
     color: #808080;
 }

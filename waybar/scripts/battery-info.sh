@@ -19,8 +19,11 @@ elif (( capacity <= 15 )); then
 elif (( capacity <= 30 )); then
     icon="󱊡"
     class="warning"
+elif (( capacity <= 60 )); then
+    icon="󱊢"
+    class="normal"
 else
-    icon="󱊡"
+    icon="󱊣"
     class="normal"
 fi
 

@@ -2,7 +2,7 @@ import app from "ags/gtk4/app"
 import style from "./style.css"
 import NotificationBar, { dismissAll } from "./widget/NotificationBar"
 import NotificationSidebar, { toggleSidebar } from "./widget/NotificationSidebar"
-import { setMode, setDnd, toggleDnd, dnd, history, clearHistory } from "./lib/notifications"
+import { setMode, setDnd, toggleDnd, dnd, history, clearHistory, clickClose, setClickClose, toggleClickClose } from "./lib/notifications"
 
 app.start({
   css: style,
@@ -42,9 +42,20 @@ app.start({
         res("cleared")
         break
 
+      case "click-close": {
+        const sub = args[1]
+        if (sub === "on") setClickClose(true)
+        else if (sub === "off") setClickClose(false)
+        else if (sub === "toggle") toggleClickClose()
+        else { res("usage: click-close on|off|toggle"); break }
+        res(`click-close ${clickClose.peek() ? "on" : "off"}`)
+        break
+      }
+
       case "status":
         res(JSON.stringify({
           dnd: dnd.peek(),
+          clickClose: clickClose.peek(),
           count: history.peek().length,
         }))
         break

@@ -8,6 +8,7 @@
 #   notif dynamic             Move windows when notification appears (default)
 #   notif overlay             Show notifications over windows
 #   notif dnd on|off|toggle   Do Not Disturb control
+#   notif click-close on|off  Close sidebar on click outside (default: off)
 #   notif clear               Clear notification history
 #
 
@@ -33,8 +34,10 @@ case "${1:-status}" in
         status=$(ags request status 2>/dev/null)
         if [ -n "$status" ]; then
             dnd=$(echo "$status" | jq -r '.dnd // false')
+            cc=$(echo "$status" | jq -r '.clickClose // false')
             count=$(echo "$status" | jq -r '.count // 0')
             echo "DND: $dnd"
+            echo "Click-close: $cc"
             echo "History: $count notification(s)"
         else
             echo "AGS not running"
@@ -56,12 +59,25 @@ case "${1:-status}" in
                 ;;
         esac
         ;;
+    click-close)
+        sub="${2:-toggle}"
+        case "$sub" in
+            on|off|toggle)
+                result=$(ags request click-close "$sub" 2>/dev/null)
+                echo "${result:-AGS not running}"
+                ;;
+            *)
+                echo "Usage: notif click-close {on|off|toggle}"
+                exit 1
+                ;;
+        esac
+        ;;
     clear)
         ags request clear 2>/dev/null || echo "AGS not running"
         echo "Notification history cleared"
         ;;
     *)
-        echo "Usage: notif {status|reserved|dynamic|overlay|dnd on|off|toggle|clear}"
+        echo "Usage: notif {status|reserved|dynamic|overlay|dnd|click-close|clear}"
         exit 1
         ;;
 esac

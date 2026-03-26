@@ -5,9 +5,9 @@
     "height": 34,
     "spacing": 4,
 
-    "modules-left": ["hyprland/workspaces", "hyprland/taskbar"],
+    "modules-left": ["hyprland/workspaces", "tray", "hyprland/taskbar"],
     "modules-center": ["clock"],
-    "modules-right": ["tray", "custom/recording", "hyprland/language", "cpu", "memory", "temperature", "custom/battery", "bluetooth", "network", "pulseaudio", "custom/power"],
+    "modules-right": ["custom/recording", "hyprland/language", "cpu", "memory", "temperature", "custom/battery", "bluetooth", "network", "pulseaudio", "custom/power"],
 
     "tray": {
         "icon-size": 16,

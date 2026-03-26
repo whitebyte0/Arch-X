@@ -156,6 +156,7 @@ This syncs packages, verifies symlinks, updates SDDM theme, and reloads Hyprland
 | Super+F | Fullscreen toggle |
 | Super+Space | Toggle floating |
 | Super+K | Lock screen |
+| Super+Shift+K | Power menu (logout, suspend, shutdown) |
 | Super+V | Clipboard history |
 | Super+Shift+V | Delete clipboard entry |
 | Super+B | Bluetooth manager |

@@ -1,0 +1,14 @@
+<span color='#ffffff'><b>  Interfaces</b></span>
+  wlp2s0  192.168.10.20/24 fe80::c08d:19ca:f71e:f995/64
+
+<span color='#89b4fa'><b>  Gateway</b></span>  192.168.10.1
+<span color='#89b4fa'><b>  DNS</b></span>  192.168.10.1 
+<span color='#f38ba8'><b>  Resolve</b></span>  <span color='#f38ba8'>FAIL</span>
+
+<span color='#6c7086'><b>󰖂  VPN</b></span>  <span color='#6c7086'>inactive</span>
+
+<span color='#f9e2af'><b>  TCP</b></span>  5 established
+
+<span color='#f9e2af'><b>  Listening</b></span>
+  :45937  
+

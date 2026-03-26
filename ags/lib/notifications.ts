@@ -22,7 +22,7 @@ function readFile_(path: string, fallback: string): string {
   }
 }
 
-const [mode, _setMode] = createState(readFile_(MODE_FILE, "dynamic"))
+const [mode, _setMode] = createState(readFile_(MODE_FILE, "overlay"))
 
 export { mode }
 

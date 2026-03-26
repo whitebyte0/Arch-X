@@ -68,7 +68,7 @@
     },
 
     "custom/battery": {
-        "exec": "bash /home/whitebyte/Arch-X/waybar/scripts/battery-info.sh",
+        "exec": "bash ~/.config/waybar/scripts/battery-info.sh",
         "return-type": "json",
         "interval": 5
     },

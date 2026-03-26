@@ -6,11 +6,13 @@ Minimal Arch Linux + Hyprland development environment. One script to go from a f
 
 **Desktop**
 - Hyprland (tiling Wayland compositor)
-- Waybar (status bar with CPU, memory, network, battery, keyboard layout)
-- Dunst (notifications — left-click to open, right-click to dismiss)
+- Waybar (status bar with CPU, memory, network, bluetooth, battery, keyboard layout)
+- Dunst (notifications with history — Super+N to recall)
 - Wofi (app launcher)
 - Wlogout (power menu)
-- Hyprlock (lock screen)
+- Hyprlock + Hypridle (lock screen + auto-lock/suspend)
+- Hyprpaper (wallpaper)
+- SDDM (display manager with custom theme)
 - adw-gtk3-dark theme
 
 **Terminal & Shell**
@@ -48,12 +50,16 @@ Minimal Arch Linux + Hyprland development environment. One script to go from a f
 
 **Dev Tools**
 - Docker, lazygit, ripgrep, fd, yazi (file manager)
-- glab (GitLab CLI)
+- glab (GitLab CLI), gh (GitHub CLI)
 - Git aliases (gs, ga, gc, gd, gl, gp, gpl)
+- Clipboard history (Super+V)
 
-**Keyboard Layouts**
-- US, Russian, Armenian (phonetic)
-- Alt+Shift to switch, indicator in waybar
+**Hardware**
+- GPU auto-detection (NVIDIA, AMD, Intel)
+- Bluetooth (bluez + bluetuith TUI + waybar module)
+- Volume, brightness, and media keys
+- Multi-monitor support with interactive setup
+- Keyboard layouts: US, Russian, Armenian (phonetic)
 
 ## Installation
 
@@ -97,7 +103,8 @@ The script asks for your password once, then handles everything:
 - Installs all packages (pacman + yay for AUR)
 - Symlinks all configs to `~/.config/`
 - Sets zsh as default shell
-- Enables ssh-agent, Docker
+- Enables ssh-agent, Docker, Bluetooth
+- Sets up SDDM display manager with custom theme
 - Applies GTK dark theme
 - Installs Neovim plugins and LSP servers
 
@@ -107,9 +114,9 @@ The script asks for your password once, then handles everything:
 reboot
 ```
 
-Log in on TTY1 — Hyprland starts automatically.
+SDDM greets you at login. Select Hyprland and log in.
 
-### 5. Post-install (manual)
+### 5. Post-install
 
 Set up the password manager:
 
@@ -117,6 +124,14 @@ Set up the password manager:
 gpg --full-generate-key
 pass init <your-gpg-id>
 pass git init
+```
+
+Change wallpaper (fetches from [Wallhaven](https://wallhaven.cc)):
+
+```bash
+fetch-wallpaper                     # random cyberpunk
+fetch-wallpaper "neon city"         # custom search
+fetch-wallpaper "synthwave" 3840x2160  # custom resolution
 ```
 
 ## Updating
@@ -127,7 +142,7 @@ After making changes to the repo:
 cd ~/Arch-X && git pull && ./update.sh
 ```
 
-This syncs packages, verifies symlinks, and reloads Hyprland, Waybar, and Dunst live — no reboot needed.
+This syncs packages, verifies symlinks, updates SDDM theme, and reloads Hyprland, Waybar, and Dunst live — no reboot needed.
 
 ## Keybindings
 
@@ -140,13 +155,24 @@ This syncs packages, verifies symlinks, and reloads Hyprland, Waybar, and Dunst 
 | Super+F | Fullscreen toggle |
 | Super+Space | Toggle floating |
 | Super+K | Lock screen |
+| Super+V | Clipboard history |
+| Super+Shift+V | Delete clipboard entry |
+| Super+B | Bluetooth manager |
+| Super+N | Notification history |
+| Super+Shift+N | Dismiss all notifications |
 | Super+Arrows | Move focus |
 | Super+Shift+Arrows | Move window |
 | Super+Alt+Arrows | Resize window |
 | Super+1-0 | Switch workspace (1-10) |
 | Super+Shift+1-0 | Move window to workspace |
+| Print | Screenshot (full screen → clipboard) |
+| Shift+Print | Screenshot (region → clipboard) |
+| Super+Print | Screenshot (region → file) |
 | Super+S | Screen record (full) |
 | Super+E | Screen record (region) |
+| XF86Audio keys | Volume up/down/mute |
+| XF86Brightness keys | Brightness up/down |
+| XF86AudioPlay/Next/Prev | Media controls |
 | Alt+Shift | Switch keyboard layout |
 | Ctrl+R | Fuzzy history search |
 | Ctrl+T | Fuzzy file finder |
@@ -171,9 +197,12 @@ LSP servers are installed automatically via Mason on first launch. Run `:Mason` 
 ~/Arch-X/
 ├── install.sh          # Fresh install setup
 ├── update.sh           # Update existing install
+├── packages.txt        # Pacman packages (one per line)
+├── packages-aur.txt    # AUR packages (one per line)
+├── lib/
+│   └── common.sh       # Shared functions (GPU, packages, logging)
 ├── .zshrc              # Shell config
-├── .zprofile           # Auto-start Hyprland
-├── hypr/               # Hyprland + Hyprlock
+├── hypr/               # Hyprland + Hyprlock + Hypridle + Hyprpaper
 ├── waybar/             # Status bar + scripts
 ├── ghostty/            # Terminal
 ├── wofi/               # App launcher
@@ -184,5 +213,7 @@ LSP servers are installed automatically via Mason on first launch. Run `:Mason` 
 ├── gtk-4.0/            # GTK4 theme settings
 ├── gnupg/              # GPG agent config
 ├── ssh/                # SSH config template
-└── bin/                # CLI tools (setup-deploy-sshkey, mount-ssh, etc.)
+├── sddm/               # SDDM display manager config
+├── sddm-theme/         # Custom SDDM login theme
+└── bin/                # CLI tools (setup-deploy-sshkey, mount-ssh, fetch-wallpaper, etc.)
 ```

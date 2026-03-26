@@ -1,15 +1,8 @@
 #!/bin/bash
 # network-info.sh — curated network info popup for waybar
 
-GREEN='#ffffff'
-PINK='#f38ba8'
-YELLOW='#f9e2af'
-BLUE='#89b4fa'
-DIM='#6c7086'
+source "$(dirname "$0")/lib.sh"
 ID=91001
-
-sanitize() { sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'; }
-section() { echo "<span color='${1}'><b>$2</b></span>"; }
 
 msg=""
 

@@ -1,0 +1,29 @@
+#!/bin/bash
+# Fetch a random wallpaper from Wallhaven and apply it
+# Usage: fetch-wallpaper [query] [resolution]
+#   fetch-wallpaper                     # random cyberpunk wallpaper
+#   fetch-wallpaper "neon city"         # custom search
+#   fetch-wallpaper "synthwave" 3840x2160
+
+source "$(dirname "$0")/../lib/common.sh"
+
+query="${1:-cyberpunk}"
+min_res="${2:-2560x1440}"
+dest="$HOME/Pictures/wallpaper.jpg"
+
+echo "Searching Wallhaven for: $query (min ${min_res})..."
+
+if fetch_wallpaper "$query" "$dest" "$min_res"; then
+    echo "Saved to $dest"
+
+    # Apply via hyprpaper if running
+    if pgrep -x hyprpaper >/dev/null; then
+        hyprctl hyprpaper unload all 2>/dev/null
+        hyprctl hyprpaper preload "$dest" 2>/dev/null
+        hyprctl hyprpaper wallpaper ",$dest" 2>/dev/null
+        echo "Applied!"
+    fi
+else
+    echo "No results found. Try a different query."
+    exit 1
+fi

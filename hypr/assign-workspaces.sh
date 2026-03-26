@@ -1,7 +1,16 @@
 #!/bin/bash
 # Dynamically assign up to 10 workspaces across monitors
+
+# Prompt monitor setup if multiple monitors and no config yet
+LOCAL_DIR="$HOME/.config/hypr-local"
+mkdir -p "$LOCAL_DIR"
 monitors=($(hyprctl monitors -j | jq -r '.[].name'))
 count=${#monitors[@]}
+
+if [ "$count" -gt 1 ] && [ ! -f "$LOCAL_DIR/monitors.conf" ]; then
+    notify-send -u normal "Arch-X" "Multiple monitors detected — run setup-monitors.sh to arrange them" 2>/dev/null
+fi
+
 per_monitor=$((10 / count))
 remainder=$((10 % count))
 

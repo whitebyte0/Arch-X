@@ -61,6 +61,12 @@ mkdir -p "$HOME/.gnupg" && chmod 700 "$HOME/.gnupg"
 ln -sf "$DOTDIR/gnupg/gpg-agent.conf" "$HOME/.gnupg/gpg-agent.conf"
 info "~/.gnupg/gpg-agent.conf ✓"
 
+# Ensure hypr-local overrides exist (prevents Hyprland source= errors)
+mkdir -p "$HOME/.config/hypr-local"
+[ -f "$HOME/.config/hypr-local/monitors.conf" ] || : > "$HOME/.config/hypr-local/monitors.conf"
+[ -f "$HOME/.config/hypr-local/gpu.conf" ]      || : > "$HOME/.config/hypr-local/gpu.conf"
+info "~/.config/hypr-local ✓"
+
 # ─── [3/7] SDDM theme ────────────────────────────────
 
 step "3/7" "Updating SDDM theme..."

@@ -77,6 +77,15 @@ else
     fail "hyprctl not found — hyprland package may be broken"
 fi
 
+# Hyprland local overrides (source= will error if missing)
+for f in monitors.conf gpu.conf; do
+    if [ -f "$HOME/.config/hypr-local/$f" ]; then
+        pass "hypr-local/$f"
+    else
+        fail "hypr-local/$f missing — run: mkdir -p ~/.config/hypr-local && touch ~/.config/hypr-local/$f"
+    fi
+done
+
 # ─── GPU Drivers ────────────────────────────────────
 
 section "GPU Drivers"

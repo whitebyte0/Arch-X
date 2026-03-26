@@ -50,3 +50,135 @@ window.urgency-critical .summary {
 window.urgency-critical .body {
     color: #e0e0e0;
 }
+
+/* ── Notification Sidebar ─────────────────────── */
+
+window.notification-sidebar {
+    background: rgba(0, 0, 0, 0.85);
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-container {
+    min-width: 380px;
+}
+
+.sidebar-header {
+    padding: 16px 16px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-title {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 13px;
+    font-weight: bold;
+    color: #e0e0e0;
+}
+
+.dnd-toggle,
+.clear-all {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 10px;
+    color: #808080;
+    margin-left: 8px;
+}
+
+.dnd-toggle:hover,
+.clear-all:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e0e0e0;
+}
+
+.dnd-toggle.active {
+    color: #f9e2af;
+}
+
+.sidebar-list {
+    padding: 8px;
+}
+
+.notification-item {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+}
+
+.notification-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.notification-item-header {
+    margin-bottom: 4px;
+}
+
+.notification-app-name {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 10px;
+    color: #89b4fa;
+}
+
+.notification-time {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 10px;
+    color: #808080;
+}
+
+.notification-item-summary {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 11px;
+    font-weight: bold;
+    color: #e0e0e0;
+}
+
+.notification-item-body {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 11px;
+    color: #808080;
+    margin-top: 2px;
+}
+
+.notification-dismiss {
+    background: transparent;
+    border: none;
+    color: #808080;
+    font-size: 11px;
+    padding: 0 4px;
+}
+
+.notification-dismiss:hover {
+    color: #f38ba8;
+}
+
+.notification-actions {
+    margin-top: 6px;
+}
+
+.notification-action {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 10px;
+    color: #89b4fa;
+    margin-right: 6px;
+}
+
+.notification-action:hover {
+    background: rgba(137, 180, 250, 0.1);
+}
+
+.sidebar-footer {
+    padding: 8px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-count {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 10px;
+    color: #808080;
+}

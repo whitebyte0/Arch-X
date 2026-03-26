@@ -1,0 +1,67 @@
+#!/bin/bash
+#
+# Arch-X — Notification mode & DND control
+#
+# Usage:
+#   notif status              Show current mode, DND, notification count
+#   notif reserved            Always reserve space for notifications
+#   notif dynamic             Move windows when notification appears (default)
+#   notif overlay             Show notifications over windows
+#   notif dnd on|off|toggle   Do Not Disturb control
+#   notif clear               Clear notification history
+#
+
+MODE_FILE="$HOME/.config/ags/notification-mode"
+
+get_mode() {
+    if [ -f "$MODE_FILE" ]; then
+        cat "$MODE_FILE"
+    else
+        echo "dynamic"
+    fi
+}
+
+set_mode() {
+    echo "$1" > "$MODE_FILE"
+    ags request "mode:$1" 2>/dev/null || true
+    echo "Notification mode: $1"
+}
+
+case "${1:-status}" in
+    status)
+        echo "Mode: $(get_mode)"
+        status=$(ags request status 2>/dev/null)
+        if [ -n "$status" ]; then
+            dnd=$(echo "$status" | jq -r '.dnd // false')
+            count=$(echo "$status" | jq -r '.count // 0')
+            echo "DND: $dnd"
+            echo "History: $count notification(s)"
+        else
+            echo "AGS not running"
+        fi
+        ;;
+    reserved|dynamic|overlay)
+        set_mode "$1"
+        ;;
+    dnd)
+        sub="${2:-toggle}"
+        case "$sub" in
+            on|off|toggle)
+                result=$(ags request dnd "$sub" 2>/dev/null)
+                echo "${result:-AGS not running}"
+                ;;
+            *)
+                echo "Usage: notif dnd {on|off|toggle}"
+                exit 1
+                ;;
+        esac
+        ;;
+    clear)
+        ags request clear 2>/dev/null || echo "AGS not running"
+        echo "Notification history cleared"
+        ;;
+    *)
+        echo "Usage: notif {status|reserved|dynamic|overlay|dnd on|off|toggle|clear}"
+        exit 1
+        ;;
+esac

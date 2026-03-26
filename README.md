@@ -7,7 +7,7 @@ Minimal Arch Linux + Hyprland development environment. One script to go from a f
 **Desktop**
 - Hyprland (tiling Wayland compositor)
 - Waybar (status bar with CPU, memory, network, bluetooth, battery, keyboard layout)
-- Dunst (notifications with history — Super+N to recall)
+- AGS notification center (bottom bar + sidebar history, DND, action buttons)
 - Wofi (app launcher)
 - Wlogout (power menu)
 - Hyprlock + Hypridle (lock screen + auto-lock/suspend)
@@ -53,6 +53,7 @@ Minimal Arch Linux + Hyprland development environment. One script to go from a f
 - glab (GitLab CLI), gh (GitHub CLI)
 - Git aliases (gs, ga, gc, gd, gl, gp, gpl)
 - Clipboard history (Super+V)
+- `notif` — notification mode switcher (reserved/dynamic/overlay), DND, history clear
 
 **Hardware**
 - GPU auto-detection (NVIDIA, AMD, Intel)
@@ -142,7 +143,7 @@ After making changes to the repo:
 cd ~/Arch-X && git pull && ./update.sh
 ```
 
-This syncs packages, verifies symlinks, updates SDDM theme, and reloads Hyprland, Waybar, and Dunst live — no reboot needed.
+This syncs packages, verifies symlinks, updates SDDM theme, and reloads Hyprland, Waybar, and AGS live — no reboot needed.
 
 ## Keybindings
 
@@ -158,8 +159,8 @@ This syncs packages, verifies symlinks, updates SDDM theme, and reloads Hyprland
 | Super+V | Clipboard history |
 | Super+Shift+V | Delete clipboard entry |
 | Super+B | Bluetooth manager |
-| Super+N | Notification history |
-| Super+Shift+N | Dismiss all notifications |
+| Super+N | Notification sidebar (history, actions, DND) |
+| Super+Shift+N | Dismiss current notification |
 | Super+Arrows | Move focus |
 | Super+Shift+Arrows | Move window |
 | Super+Alt+Arrows | Resize window |
@@ -206,7 +207,7 @@ LSP servers are installed automatically via Mason on first launch. Run `:Mason` 
 ├── waybar/             # Status bar + scripts
 ├── ghostty/            # Terminal
 ├── wofi/               # App launcher
-├── ags/                # Notification bar (AGS)
+├── ags/                # Notification center (AGS — bottom bar + sidebar)
 ├── wlogout/            # Power menu
 ├── nvim/               # Neovim (NvChad + plugins)
 ├── gtk-3.0/            # GTK3 theme settings

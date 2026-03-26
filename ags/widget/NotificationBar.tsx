@@ -1,14 +1,20 @@
 import app from "ags/gtk4/app"
 import { Astal, Gtk, Gdk } from "ags/gtk4"
 import { createState, createComputed } from "ags"
-import Notifd from "gi://AstalNotifd?version=0.1"
 import GLib from "gi://GLib"
+import Notifd from "gi://AstalNotifd?version=0.1"
+import { notifd, mode, dnd, recordNotification } from "../lib/notifications"
 
 const TIMEOUT_LOW = 8000
 const TIMEOUT_NORMAL = 12000
 
+let _hide: (() => void) | null = null
+
+export function dismissAll() {
+  if (_hide) _hide()
+}
+
 export default function NotificationBar(gdkmonitor: Gdk.Monitor) {
-  const notifd = Notifd.get_default()
   const [visible, setVisible] = createState(false)
   const [summary, setSummary] = createState("")
   const [body, setBody] = createState("")
@@ -19,6 +25,19 @@ export default function NotificationBar(gdkmonitor: Gdk.Monitor) {
     const stripped = b.replace(/<[^>]*>/g, "")
     const oneline = stripped.replace(/\n/g, "  ")
     return oneline ? `  ${oneline}` : ""
+  })
+
+  const exclusivity = createComputed(() => {
+    const m = mode()
+    const v = visible()
+    if (m === "reserved") return Astal.Exclusivity.EXCLUSIVE
+    if (m === "dynamic" && v) return Astal.Exclusivity.EXCLUSIVE
+    return Astal.Exclusivity.NORMAL
+  })
+
+  const windowVisible = createComputed(() => {
+    if (mode() === "reserved") return true
+    return visible()
   })
 
   let hideTimer: number | null = null
@@ -33,7 +52,11 @@ export default function NotificationBar(gdkmonitor: Gdk.Monitor) {
   function hide() {
     clearTimer()
     setVisible(false)
+    setSummary("")
+    setBody("")
   }
+
+  _hide = hide
 
   function show(n: Notifd.Notification) {
     clearTimer()
@@ -62,7 +85,9 @@ export default function NotificationBar(gdkmonitor: Gdk.Monitor) {
 
   notifd.connect("notified", (_self: Notifd.Notifd, id: number) => {
     const n = notifd.get_notification(id)
-    if (n) show(n)
+    if (!n) return
+    recordNotification(n)
+    if (!dnd.peek()) show(n)
   })
 
   notifd.connect("resolved", () => {
@@ -73,11 +98,11 @@ export default function NotificationBar(gdkmonitor: Gdk.Monitor) {
 
   return (
     <window
-      visible={visible}
+      visible={windowVisible}
       name="notification-bar"
       cssClasses={createComputed(() => ["notification-bar", urgencyClass()])}
       gdkmonitor={gdkmonitor}
-      exclusivity={visible.as((v) => v ? Astal.Exclusivity.EXCLUSIVE : Astal.Exclusivity.NORMAL)}
+      exclusivity={exclusivity}
       anchor={BOTTOM | LEFT | RIGHT}
       layer={Astal.Layer.TOP}
       application={app}

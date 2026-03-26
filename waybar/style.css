@@ -58,7 +58,8 @@ window#waybar {
 #temperature,
 #network,
 #pulseaudio,
-#battery,
+#custom-battery,
+#bluetooth,
 #language,
 #custom-power {
     padding: 0 10px;
@@ -74,7 +75,8 @@ window#waybar {
 #temperature:hover,
 #network:hover,
 #pulseaudio:hover,
-#battery:hover {
+#custom-battery:hover,
+#bluetooth:hover {
     background: rgba(255, 255, 255, 0.09);
 }
 
@@ -87,17 +89,17 @@ window#waybar {
 
 /* ── Battery ───────────────────────────────────── */
 
-#battery.warning {
+#custom-battery.warning {
     color: #f9e2af;
 }
 
-#battery.critical {
+#custom-battery.critical {
     color: #f38ba8;
     background: rgba(243, 139, 168, 0.1);
     animation: blink 1s steps(1) infinite;
 }
 
-#battery.charging {
+#custom-battery.charging {
     color: #ffffff;
 }
 

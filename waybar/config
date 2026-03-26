@@ -7,7 +7,7 @@
 
     "modules-left": ["hyprland/workspaces", "hyprland/taskbar"],
     "modules-center": ["clock"],
-    "modules-right": ["tray", "custom/recording", "hyprland/language", "cpu", "memory", "temperature", "battery", "bluetooth", "network", "pulseaudio", "custom/power"],
+    "modules-right": ["tray", "custom/recording", "hyprland/language", "cpu", "memory", "temperature", "custom/battery", "bluetooth", "network", "pulseaudio", "custom/power"],
 
     "tray": {
         "icon-size": 16,
@@ -67,15 +67,10 @@
         "interval": 2
     },
 
-    "battery": {
-        "format": "{icon} {capacity}%",
-        "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
-        "format-charging": "󰂄 {capacity}%",
-        "tooltip-format": "{timeTo}\n{power} W",
-        "states": {
-            "warning": 30,
-            "critical": 15
-        }
+    "custom/battery": {
+        "exec": "bash /home/whitebyte/Arch-X/waybar/scripts/battery-info.sh",
+        "return-type": "json",
+        "interval": 5
     },
 
     "clock": {

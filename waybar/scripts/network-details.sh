@@ -41,4 +41,5 @@ msg+="$(section "$BLUE" '  Routes')\n"
 routes=$(ip route 2>/dev/null | head -8 | sanitize)
 msg+="$routes\n"
 
-notify-send -t 15000 -h "string:x-canonical-private-synchronous:$ID" "Network Details" "$msg"
+echo -e "$msg" > "$HOME/.config/ags/info-content"
+ags request info "Network Details" 2>/dev/null || notify-send -t 15000 "Network Details" "$msg"

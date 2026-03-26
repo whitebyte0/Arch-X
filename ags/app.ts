@@ -2,7 +2,10 @@ import app from "ags/gtk4/app"
 import style from "./style.css"
 import NotificationBar, { dismissAll } from "./widget/NotificationBar"
 import NotificationSidebar, { toggleSidebar } from "./widget/NotificationSidebar"
-import { setMode, setDnd, toggleDnd, dnd, history, clearHistory, clickClose, setClickClose, toggleClickClose } from "./lib/notifications"
+import InfoPanel, { showInfo, hideInfo } from "./widget/InfoPanel"
+import { readFile } from "ags/file"
+import GLib from "gi://GLib"
+import { setMode, setDnd, toggleDnd, dnd, history, clearHistory, focusDismiss, setFocusDismiss, toggleFocusDismiss } from "./lib/notifications"
 
 app.start({
   css: style,
@@ -20,6 +23,23 @@ app.start({
       case "dismiss-all":
         dismissAll()
         res("dismissed")
+        break
+
+      case "info": {
+        const infoTitle = args[1] || ""
+        const infoFile = GLib.get_home_dir() + "/.config/ags/info-content"
+        let infoContent = ""
+        try {
+          infoContent = readFile(infoFile).trim()
+        } catch {}
+        showInfo(infoTitle, infoContent, 15000)
+        res("ok")
+        break
+      }
+
+      case "hide-info":
+        hideInfo()
+        res("ok")
         break
 
       case "toggle-sidebar":
@@ -42,20 +62,20 @@ app.start({
         res("cleared")
         break
 
-      case "click-close": {
+      case "focus-dismiss": {
         const sub = args[1]
-        if (sub === "on") setClickClose(true)
-        else if (sub === "off") setClickClose(false)
-        else if (sub === "toggle") toggleClickClose()
-        else { res("usage: click-close on|off|toggle"); break }
-        res(`click-close ${clickClose.peek() ? "on" : "off"}`)
+        if (sub === "on") setFocusDismiss(true)
+        else if (sub === "off") setFocusDismiss(false)
+        else if (sub === "toggle") toggleFocusDismiss()
+        else { res("usage: focus-dismiss on|off|toggle"); break }
+        res(`focus-dismiss ${focusDismiss.peek() ? "on" : "off"}`)
         break
       }
 
       case "status":
         res(JSON.stringify({
           dnd: dnd.peek(),
-          clickClose: clickClose.peek(),
+          focusDismiss: focusDismiss.peek(),
           count: history.peek().length,
         }))
         break
@@ -67,6 +87,9 @@ app.start({
   main() {
     const monitors = app.get_monitors()
     monitors.map(NotificationBar)
-    if (monitors.length > 0) NotificationSidebar(monitors[0])
+    if (monitors.length > 0) {
+      NotificationSidebar(monitors[0])
+      InfoPanel(monitors[0])
+    }
   },
 })

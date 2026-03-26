@@ -5,7 +5,7 @@ import GLib from "gi://GLib"
 
 const MODE_FILE = GLib.get_home_dir() + "/.config/ags/notification-mode"
 const DND_FILE = GLib.get_home_dir() + "/.config/ags/notification-dnd"
-const CLICK_CLOSE_FILE = GLib.get_home_dir() + "/.config/ags/notification-click-close"
+const FOCUS_DISMISS_FILE = GLib.get_home_dir() + "/.config/ags/notification-focus-dismiss"
 
 // ── Notifd singleton ──────────────────────────────
 
@@ -50,17 +50,17 @@ export function toggleDnd() {
 
 // ── Click-outside-to-close ────────────────────────
 
-const [clickClose, _setClickClose] = createState(readFile_(CLICK_CLOSE_FILE, "off") === "on")
+const [focusDismiss, _setFocusDismiss] = createState(readFile_(FOCUS_DISMISS_FILE, "on") === "on")
 
-export { clickClose }
+export { focusDismiss }
 
-export function setClickClose(value: boolean) {
-  _setClickClose(value)
-  writeFile(CLICK_CLOSE_FILE, value ? "on" : "off")
+export function setFocusDismiss(value: boolean) {
+  _setFocusDismiss(value)
+  writeFile(FOCUS_DISMISS_FILE, value ? "on" : "off")
 }
 
-export function toggleClickClose() {
-  setClickClose(!clickClose.peek())
+export function toggleFocusDismiss() {
+  setFocusDismiss(!focusDismiss.peek())
 }
 
 // ── Notification history ──────────────────────────
@@ -84,7 +84,7 @@ export function recordNotification(n: Notifd.Notification): void {
   const nActions = n.get_actions()
   if (nActions) {
     for (const action of nActions) {
-      if (action.label && action.id !== "default") {
+      if (action.label) {
         actions.push({ id: action.id, label: action.label })
       }
     }

@@ -8,7 +8,7 @@ import {
   notifd,
   dnd,
   toggleDnd,
-  clickClose,
+  focusDismiss,
   history,
   dismissNotification,
   clearHistory,
@@ -32,7 +32,7 @@ function closeSidebar() {
   setSidebarVisible(false)
 }
 
-const scrimVisible = createComputed(() => sidebarVisible() && clickClose())
+const scrimVisible = createComputed(() => sidebarVisible() && focusDismiss())
 
 function NotificationItem(entry: HistoryEntry) {
   const timeLabel = createComputed(() => {

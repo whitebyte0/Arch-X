@@ -27,4 +27,5 @@ top_procs=$(ps aux --sort=-%mem --no-headers | head -5 | awk '{
 }' | sanitize)
 msg+="$top_procs\n"
 
-notify-send -t 10000 -h "string:x-canonical-private-synchronous:$ID" "Memory" "$msg"
+echo -e "$msg" > "$HOME/.config/ags/info-content"
+ags request info Memory 2>/dev/null || notify-send -t 10000 "Memory" "$msg"

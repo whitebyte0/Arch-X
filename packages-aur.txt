@@ -2,3 +2,5 @@ wlogout
 adw-gtk3
 signal-desktop
 bluetuith
+aylurs-gtk-shell
+libastal-meta

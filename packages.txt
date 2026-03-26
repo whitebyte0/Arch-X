@@ -1,7 +1,7 @@
 # Hyprland + desktop
 hyprland
 waybar
-dunst
+gjs
 wofi
 hyprlock
 hypridle

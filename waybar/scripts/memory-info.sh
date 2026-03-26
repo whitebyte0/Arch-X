@@ -27,4 +27,4 @@ top_procs=$(ps aux --sort=-%mem --no-headers | head -5 | awk '{
 }' | sanitize)
 msg+="$top_procs\n"
 
-dunstify -r "$ID" -t 10000 "Memory" "$msg"
+notify-send -t 10000 -h "string:x-canonical-private-synchronous:$ID" "Memory" "$msg"

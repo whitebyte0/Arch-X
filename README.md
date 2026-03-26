@@ -206,7 +206,7 @@ LSP servers are installed automatically via Mason on first launch. Run `:Mason` 
 ├── waybar/             # Status bar + scripts
 ├── ghostty/            # Terminal
 ├── wofi/               # App launcher
-├── dunst/              # Notifications
+├── ags/                # Notification bar (AGS)
 ├── wlogout/            # Power menu
 ├── nvim/               # Neovim (NvChad + plugins)
 ├── gtk-3.0/            # GTK3 theme settings

@@ -68,4 +68,4 @@ else
     msg+="  <span color='${DIM}'>none</span>\n"
 fi
 
-dunstify -r "$ID" -t 12000 "Network" "$msg"
+notify-send -t 12000 -h "string:x-canonical-private-synchronous:$ID" "Network" "$msg"

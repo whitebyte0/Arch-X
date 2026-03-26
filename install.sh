@@ -40,7 +40,7 @@ step "2/10" "Linking configuration files..."
 
 mkdir -p "$HOME/.config"
 
-for dir in hypr waybar ghostty wofi dunst wlogout nvim gtk-3.0 gtk-4.0; do
+for dir in hypr waybar ghostty wofi ags wlogout nvim gtk-3.0 gtk-4.0; do
     if [ -e "$HOME/.config/$dir" ] && [ ! -L "$HOME/.config/$dir" ]; then
         mv "$HOME/.config/$dir" "$HOME/.config/${dir}.bak"
         warn "Backed up existing ~/.config/$dir → ${dir}.bak"

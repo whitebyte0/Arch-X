@@ -133,7 +133,7 @@ fi
 
 section "Config Symlinks"
 
-for dir in hypr waybar ghostty wofi dunst wlogout nvim gtk-3.0 gtk-4.0; do
+for dir in hypr waybar ghostty wofi ags wlogout nvim gtk-3.0 gtk-4.0; do
     target="$HOME/.config/$dir"
     if [ -L "$target" ] && [ "$(readlink -f "$target")" = "$DOTDIR/$dir" ]; then
         pass "~/.config/$dir"
@@ -213,7 +213,7 @@ fi
 
 section "Key Packages"
 
-for pkg in hyprland waybar dunst wofi hyprlock ghostty neovim sddm snixembed wlogout; do
+for pkg in hyprland waybar aylurs-gtk-shell wofi hyprlock ghostty neovim sddm snixembed wlogout; do
     if pacman -Q "$pkg" &>/dev/null || yay -Q "$pkg" &>/dev/null; then
         pass "$pkg"
     else

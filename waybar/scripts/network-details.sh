@@ -41,4 +41,4 @@ msg+="$(section "$BLUE" '  Routes')\n"
 routes=$(ip route 2>/dev/null | head -8 | sanitize)
 msg+="$routes\n"
 
-dunstify -r "$ID" -t 15000 "Network Details" "$msg"
+notify-send -t 15000 -h "string:x-canonical-private-synchronous:$ID" "Network Details" "$msg"

@@ -31,7 +31,7 @@ step "2/7" "Verifying symlinks..."
 
 mkdir -p "$HOME/.config"
 
-for dir in hypr waybar ghostty wofi dunst wlogout nvim gtk-3.0 gtk-4.0; do
+for dir in hypr waybar ghostty wofi ags wlogout nvim gtk-3.0 gtk-4.0; do
     if [ -L "$HOME/.config/$dir" ] && [ "$(readlink -f "$HOME/.config/$dir")" = "$DOTDIR/$dir" ]; then
         info "~/.config/$dir ✓"
     else
@@ -103,13 +103,13 @@ step "5/7" "Reloading services..."
 # Reload Hyprland config
 hyprctl reload 2>/dev/null && info "Hyprland reloaded" || warn "Hyprland not running"
 
-# Restart waybar and dunst
+# Restart waybar and AGS
 killall waybar 2>/dev/null || true
-killall dunst 2>/dev/null || true
+ags quit 2>/dev/null || true
 sleep 0.5
 hyprctl dispatch exec waybar 2>/dev/null
-hyprctl dispatch exec dunst 2>/dev/null
-info "Waybar and Dunst restarted"
+hyprctl dispatch exec "ags run --gtk 4 -d ~/.config/ags/" 2>/dev/null
+info "Waybar and AGS restarted"
 
 info "Run 'source ~/.zshrc' to apply shell changes"
 

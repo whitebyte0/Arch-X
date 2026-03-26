@@ -1,0 +1,52 @@
+window.notification-bar {
+    background: rgba(0, 0, 0, 0.75);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+window.notification-bar.urgency-critical {
+    border-top: 1px solid #f38ba8;
+}
+
+.bar-content {
+    min-height: 30px;
+    padding: 0 14px;
+}
+
+.notification-button {
+    background: transparent;
+    border: none;
+    min-height: 30px;
+}
+
+.notification-button:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.summary {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 11px;
+    font-weight: bold;
+    color: #e0e0e0;
+}
+
+.body {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 11px;
+    color: #808080;
+}
+
+window.urgency-low .summary {
+    color: #808080;
+}
+
+window.urgency-low .body {
+    color: #6c7086;
+}
+
+window.urgency-critical .summary {
+    color: #f38ba8;
+}
+
+window.urgency-critical .body {
+    color: #e0e0e0;
+}

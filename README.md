@@ -53,7 +53,7 @@ Minimal Arch Linux + Hyprland development environment. One script to go from a f
 - glab (GitLab CLI), gh (GitHub CLI)
 - Git aliases (gs, ga, gc, gd, gl, gp, gpl)
 - Clipboard history (Super+V)
-- `notif` — notification mode switcher (reserved/dynamic/overlay), DND, history clear
+- `notif` — notification control (mode, DND, focus-dismiss, history)
 
 **Hardware**
 - GPU auto-detection (NVIDIA, AMD, Intel)

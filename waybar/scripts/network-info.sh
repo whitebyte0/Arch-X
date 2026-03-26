@@ -1,7 +1,7 @@
 #!/bin/bash
 # network-info.sh — curated network info popup for waybar
 
-GREEN='#a6e3a1'
+GREEN='#ffffff'
 PINK='#f38ba8'
 YELLOW='#f9e2af'
 BLUE='#89b4fa'

@@ -38,6 +38,7 @@ step "1/5" "Syncing packages..."
 sudo pacman -S --needed --noconfirm \
     hyprland waybar dunst wofi hyprlock grim slurp wf-recorder nwg-look \
     xdg-desktop-portal-hyprland \
+    sddm qt6-svg qt6-virtualkeyboard \
     ghostty zsh zsh-autosuggestions zsh-syntax-highlighting \
     fzf fd ripgrep eza bat zoxide yazi sshfs lazygit sshs \
     neovim git docker docker-compose glab \
@@ -64,14 +65,43 @@ fi
 
 # AUR packages
 if command -v yay &>/dev/null; then
-    yay -S --needed --noconfirm wlogout adw-gtk3
+    yay -S --needed --noconfirm wlogout adw-gtk3 snixembed
 else
     warn "yay not found — skipping AUR packages"
 fi
 
-# ─── [2/5] Symlinks ──────────────────────────────────
+# ─── [2/7] SDDM display manager ─────────────────────
 
-step "2/5" "Verifying symlinks..."
+step "2/7" "Verifying SDDM..."
+
+# Re-deploy SDDM theme (may be overwritten by package updates)
+sudo mkdir -p /usr/share/sddm/themes/whitebyte
+sudo cp -r "$DOTDIR/sddm-theme/"* /usr/share/sddm/themes/whitebyte/
+info "SDDM theme synced"
+
+# Re-deploy SDDM config
+sudo mkdir -p /etc/sddm.conf.d
+sudo cp "$DOTDIR/sddm/sddm.conf" /etc/sddm.conf.d/arch-x.conf
+info "SDDM config synced"
+
+# Verify SDDM is enabled
+if ! systemctl is-enabled sddm &>/dev/null; then
+    sudo systemctl enable sddm
+    warn "SDDM was disabled — re-enabled"
+else
+    info "SDDM enabled ✓"
+fi
+
+# Verify Hyprland session file exists
+if [ -f /usr/share/wayland-sessions/hyprland.desktop ]; then
+    info "Hyprland session file ✓"
+else
+    warn "Hyprland session file missing at /usr/share/wayland-sessions/hyprland.desktop"
+fi
+
+# ─── [3/7] Symlinks ──────────────────────────────────
+
+step "3/7" "Verifying symlinks..."
 
 mkdir -p "$HOME/.config"
 
@@ -105,18 +135,18 @@ mkdir -p "$HOME/.gnupg" && chmod 700 "$HOME/.gnupg"
 ln -sf "$DOTDIR/gnupg/gpg-agent.conf" "$HOME/.gnupg/gpg-agent.conf"
 info "~/.gnupg/gpg-agent.conf ✓"
 
-# ─── [3/5] Permissions ───────────────────────────────
+# ─── [4/7] Permissions ───────────────────────────────
 
-step "3/5" "Setting permissions..."
+step "4/7" "Setting permissions..."
 
 chmod +x "$DOTDIR/waybar/scripts/"*.sh 2>/dev/null || true
 chmod +x "$DOTDIR/bin/"* 2>/dev/null || true
 info "Waybar scripts ✓"
 info "Bin scripts ✓"
 
-# ─── [4/5] Reload services ───────────────────────────
+# ─── [5/7] Reload Hyprland ───────────────────────────
 
-step "4/5" "Reloading services..."
+step "5/7" "Reloading Hyprland..."
 
 # Reload Hyprland config
 hyprctl reload 2>/dev/null && info "Hyprland reloaded" || warn "Hyprland not running"
@@ -132,7 +162,29 @@ info "Waybar and Dunst restarted"
 # Reload zsh config for current shell
 info "Run 'source ~/.zshrc' to apply shell changes"
 
-# ─── [5/5] Done ──────────────────────────────────────
+# ─── [6/7] Verify services ──────────────────────────
 
-step "5/5" "Update complete!"
+step "6/7" "Verifying systemd services..."
+
+# SSH agent
+if systemctl --user is-enabled ssh-agent.socket &>/dev/null; then
+    info "ssh-agent.socket ✓"
+else
+    systemctl --user enable --now ssh-agent.socket 2>/dev/null && \
+        warn "ssh-agent.socket was disabled — re-enabled" || \
+        warn "Could not enable ssh-agent.socket"
+fi
+
+# Docker
+if systemctl is-enabled docker &>/dev/null; then
+    info "docker.service ✓"
+else
+    sudo systemctl enable --now docker && \
+        warn "docker was disabled — re-enabled" || \
+        warn "Could not enable docker"
+fi
+
+# ─── [7/7] Done ──────────────────────────────────────
+
+step "7/7" "Update complete!"
 echo ""

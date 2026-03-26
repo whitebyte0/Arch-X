@@ -1,7 +1,7 @@
 #!/bin/bash
 # network-details.sh — detailed network info popup (right-click)
 
-GREEN='#a6e3a1'
+GREEN='#ffffff'
 BLUE='#89b4fa'
 DIM='#6c7086'
 ID=91002

@@ -1,7 +1,7 @@
 #!/bin/bash
 # memory-info.sh — Memory info popup for waybar
 
-GREEN='#a6e3a1'
+GREEN='#ffffff'
 YELLOW='#f9e2af'
 BLUE='#89b4fa'
 DIM='#6c7086'

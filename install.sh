@@ -37,6 +37,7 @@ step "1/9" "Installing packages..."
 sudo pacman -S --needed --noconfirm \
     hyprland waybar dunst wofi hyprlock grim slurp wf-recorder nwg-look \
     xdg-desktop-portal-hyprland \
+    sddm qt6-svg qt6-virtualkeyboard \
     ghostty zsh zsh-autosuggestions zsh-syntax-highlighting \
     fzf fd ripgrep eza bat zoxide yazi sshfs lazygit sshs \
     neovim git docker docker-compose glab \
@@ -50,10 +51,35 @@ sudo pacman -S --needed --noconfirm \
 GPU_VENDOR=$(lspci -nn | grep -i vga)
 if echo "$GPU_VENDOR" | grep -qi nvidia; then
     info "Detected NVIDIA GPU"
-    sudo pacman -S --needed --noconfirm nvidia nvidia-utils lib32-nvidia-utils
+    sudo pacman -S --needed --noconfirm nvidia-open nvidia-utils lib32-nvidia-utils
     # Enable DRM kernel mode setting for Hyprland
-    if ! grep -q "nvidia_drm.modeset=1" /etc/default/grub 2>/dev/null; then
-        warn "Add 'nvidia_drm.modeset=1' to kernel params for Hyprland"
+    if grep -q "nvidia_drm.modeset=1" /proc/cmdline 2>/dev/null; then
+        info "nvidia_drm.modeset=1 already active"
+    elif [ -f /etc/default/grub ]; then
+        if ! grep -q "nvidia_drm.modeset=1" /etc/default/grub; then
+            sudo sed -i 's/\(GRUB_CMDLINE_LINUX_DEFAULT="[^"]*\)/\1 nvidia_drm.modeset=1/' /etc/default/grub
+            sudo grub-mkconfig -o /boot/grub/grub.cfg
+            info "Added nvidia_drm.modeset=1 to GRUB and regenerated config"
+        fi
+    else
+        # systemd-boot: check common entry paths
+        BOOT_ENTRIES=""
+        for dir in /boot/loader/entries /efi/loader/entries; do
+            if sudo test -d "$dir"; then
+                BOOT_ENTRIES="$dir"
+                break
+            fi
+        done
+        if [ -n "$BOOT_ENTRIES" ]; then
+            for entry in "$BOOT_ENTRIES"/*.conf; do
+                if sudo test -f "$entry" && ! sudo grep -q "nvidia_drm.modeset=1" "$entry"; then
+                    sudo sed -i '/^options/s/$/ nvidia_drm.modeset=1/' "$entry"
+                    info "Added nvidia_drm.modeset=1 to $(basename "$entry")"
+                fi
+            done
+        else
+            warn "Add 'nvidia_drm.modeset=1' to your bootloader kernel params manually"
+        fi
     fi
 elif echo "$GPU_VENDOR" | grep -qi amd; then
     info "Detected AMD GPU"
@@ -68,14 +94,14 @@ fi
 
 # AUR packages (requires yay)
 if command -v yay &>/dev/null; then
-    yay -S --needed --noconfirm wlogout adw-gtk3
+    yay -S --needed --noconfirm wlogout adw-gtk3 snixembed
 else
     warn "yay not found — installing yay first..."
     sudo pacman -S --needed --noconfirm base-devel
     git clone https://aur.archlinux.org/yay.git /tmp/yay-install
     (cd /tmp/yay-install && makepkg -si --noconfirm)
     rm -rf /tmp/yay-install
-    yay -S --needed --noconfirm wlogout adw-gtk3
+    yay -S --needed --noconfirm wlogout adw-gtk3 snixembed
 fi
 
 # ─── [2/9] Symlink configs ───────────────────────────
@@ -155,32 +181,50 @@ else
     info "Already in docker group"
 fi
 
-# ─── [6/9] GTK theme ─────────────────────────────────
+# ─── [6/10] SDDM display manager ────────────────────
 
-step "6/9" "Applying GTK theme..."
+step "6/10" "Configuring SDDM..."
+
+# Deploy SDDM theme
+sudo mkdir -p /usr/share/sddm/themes/whitebyte
+sudo cp -r "$DOTDIR/sddm-theme/"* /usr/share/sddm/themes/whitebyte/
+info "SDDM theme deployed to /usr/share/sddm/themes/whitebyte"
+
+# Deploy SDDM config
+sudo mkdir -p /etc/sddm.conf.d
+sudo cp "$DOTDIR/sddm/sddm.conf" /etc/sddm.conf.d/arch-x.conf
+info "SDDM config deployed to /etc/sddm.conf.d/arch-x.conf"
+
+# Enable SDDM
+sudo systemctl enable sddm
+info "SDDM enabled (will start on next boot)"
+
+# ─── [7/10] GTK theme ─────────────────────────────────
+
+step "7/10" "Applying GTK theme..."
 
 gsettings set org.gnome.desktop.interface gtk-theme 'adw-gtk3-dark' 2>/dev/null || \
     warn "gsettings not available — GTK theme will apply from settings.ini on first Hyprland session"
 gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark' 2>/dev/null || true
 info "GTK theme set to adw-gtk3-dark"
 
-# ─── [7/9] Waybar scripts ────────────────────────────
+# ─── [8/10] Waybar scripts ────────────────────────────
 
-step "7/9" "Setting script permissions..."
+step "8/10" "Setting script permissions..."
 
 chmod +x "$DOTDIR/waybar/scripts/"*.sh 2>/dev/null || true
 info "Waybar scripts marked executable"
 
-# ─── [8/9] Neovim plugins ────────────────────────────
+# ─── [9/10] Neovim plugins ────────────────────────────
 
-step "8/9" "Installing Neovim plugins..."
+step "9/10" "Installing Neovim plugins..."
 
 nvim --headless "+Lazy! sync" +qa 2>/dev/null || \
     warn "Neovim plugin sync skipped — run 'nvim' to install plugins on first launch"
 
-# ─── [9/9] Summary ───────────────────────────────────
+# ─── [10/10] Summary ──────────────────────────────────
 
-step "9/9" "Setup complete!"
+step "10/10" "Setup complete!"
 
 echo ""
 echo "  ┌──────────────────────────────────────┐"

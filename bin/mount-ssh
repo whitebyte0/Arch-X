@@ -25,11 +25,9 @@ if mountpoint -q "$mountpoint" 2>/dev/null; then
 fi
 
 mkdir -p "$mountpoint"
-sshfs "${host}:${remote}" "$mountpoint" \
+if sshfs "${host}:${remote}" "$mountpoint" \
     -o reconnect,ServerAliveInterval=15,ServerAliveCountMax=3 \
-    -o follow_symlinks
-
-if [[ $? -eq 0 ]]; then
+    -o follow_symlinks; then
     echo "Mounted ${host}:${remote} → $mountpoint"
     yazi "$mountpoint"
 else

@@ -43,10 +43,10 @@ else
     warn "SDDM is not running (normal if checking from TTY before first boot)"
 fi
 
-if [ -f /etc/sddm.conf.d/arch-x.conf ] || grep -q "whitebyte" /etc/sddm.conf 2>/dev/null; then
+if [ -f /etc/sddm.conf.d/sddm.conf ] || grep -q "whitebyte" /etc/sddm.conf 2>/dev/null; then
     pass "SDDM config deployed"
 else
-    fail "SDDM config missing — run update.sh or: sudo cp $DOTDIR/sddm/sddm.conf /etc/sddm.conf.d/arch-x.conf"
+    fail "SDDM config missing — run update.sh to deploy"
 fi
 
 if [ -d /usr/share/sddm/themes/whitebyte ]; then
@@ -63,12 +63,6 @@ if [ -f /usr/share/wayland-sessions/hyprland.desktop ]; then
     pass "Session file exists"
 else
     fail "Session file missing at /usr/share/wayland-sessions/hyprland.desktop"
-fi
-
-if [ -x /usr/bin/start-hyprland ]; then
-    pass "start-hyprland binary exists"
-else
-    fail "start-hyprland binary missing — reinstall hyprland package"
 fi
 
 if command -v hyprctl &>/dev/null; then
@@ -146,7 +140,7 @@ for dir in hypr waybar ghostty wofi ags wlogout nvim gtk-3.0 gtk-4.0; do
     fi
 done
 
-for file in .zshrc .zprofile; do
+for file in .zshrc; do
     target="$HOME/$file"
     if [ -L "$target" ] && [ "$(readlink -f "$target")" = "$DOTDIR/$file" ]; then
         pass "~/$file"

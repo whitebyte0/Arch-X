@@ -7,7 +7,7 @@
 #
 # Safe to run repeatedly — only applies changes, skips what's already done.
 
-set -e
+set -eo pipefail
 source "$(dirname "$0")/lib/common.sh"
 sudo_keepalive
 

@@ -28,9 +28,7 @@ fi
 
 # deploy key to remote host (will prompt for password)
 echo "Deploying key to $user@$ip:$port ..."
-ssh-copy-id -i "$keyfile.pub" -p "$port" "$user@$ip"
-
-if [[ $? -ne 0 ]]; then
+if ! ssh-copy-id -i "$keyfile.pub" -p "$port" "$user@$ip"; then
     echo "Failed to deploy key."
     exit 1
 fi

@@ -55,9 +55,15 @@ cliphist
 gnupg
 pinentry
 
+# Audio
+pipewire
+wireplumber
+pipewire-pulse
+
 # Network + system
 openssh
 sshpass
+bind-tools
 libnotify
 
 # Applications

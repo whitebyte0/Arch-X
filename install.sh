@@ -7,7 +7,7 @@
 #
 # Assumes: fresh Arch Linux install with a non-root user and sudo access.
 
-set -e
+set -eo pipefail
 source "$(dirname "$0")/lib/common.sh"
 sudo_keepalive
 

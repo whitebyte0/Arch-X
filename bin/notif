@@ -34,10 +34,10 @@ case "${1:-status}" in
         status=$(ags request status 2>/dev/null)
         if [ -n "$status" ]; then
             dnd=$(echo "$status" | jq -r '.dnd // false')
-            cc=$(echo "$status" | jq -r '.clickClose // false')
+            fd=$(echo "$status" | jq -r '.focusDismiss // false')
             count=$(echo "$status" | jq -r '.count // 0')
             echo "DND: $dnd"
-            echo "Focus-dismiss: $cc"
+            echo "Focus-dismiss: $fd"
             echo "History: $count notification(s)"
         else
             echo "AGS not running"

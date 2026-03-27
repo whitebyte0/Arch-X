@@ -29,6 +29,7 @@ export { mode }
 export function setMode(m: string) {
   if (["reserved", "dynamic", "overlay"].includes(m)) {
     _setMode(m)
+    writeFile(MODE_FILE, m)
   }
 }
 
@@ -100,7 +101,8 @@ export function recordNotification(n: Notifd.Notification): void {
     actions,
   }
 
-  setHistory([entry, ...history.peek()])
+  const updated = [entry, ...history.peek()]
+  setHistory(updated.length > 200 ? updated.slice(0, 200) : updated)
 }
 
 export function dismissNotification(id: number): void {

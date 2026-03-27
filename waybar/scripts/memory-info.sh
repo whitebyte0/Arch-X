@@ -8,14 +8,14 @@ msg=""
 
 # ── RAM ──
 read -r _ total used free shared bufcache avail < <(free -h | grep '^Mem:')
-msg+="$(section "$GREEN" '  RAM')  $used / $total  <span color='${DIM}'>(avail: $avail)</span>\n\n"
+msg+="$(section "$GREEN" '  RAM')  $used / $total  <span color='${DIM}'>(avail: $avail)</span>\n"
 
 # ── Swap ──
 read -r _ stotal sused sfree < <(free -h | grep '^Swap:')
 if [ "$sused" = "0B" ] || [ "$sused" = "0Bi" ] || [ "$sused" = "0" ]; then
-    msg+="$(section "$BLUE" '  Swap')  <span color='${DIM}'>not in use</span>  ($stotal total)\n\n"
+    msg+="$(section "$BLUE" '  Swap')  <span color='${DIM}'>not in use</span>  ($stotal total)\n"
 else
-    msg+="$(section "$BLUE" '  Swap')  $sused / $stotal\n\n"
+    msg+="$(section "$BLUE" '  Swap')  $sused / $stotal\n"
 fi
 
 # ── Top 5 by memory ──

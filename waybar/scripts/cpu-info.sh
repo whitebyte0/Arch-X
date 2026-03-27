@@ -8,12 +8,12 @@ msg=""
 
 # ── Load average ──
 read -r one five fifteen _ < /proc/loadavg
-msg+="$(section "$GREEN" '  Load')  $one  $five  $fifteen\n\n"
+msg+="$(section "$GREEN" '  Load')  $one  $five  $fifteen\n"
 
 # ── Cores + frequency ──
 cores=$(nproc)
 freq=$(awk '/cpu MHz/{sum+=$4; n++} END{if(n>0) printf "%.0f", sum/n}' /proc/cpuinfo)
-msg+="$(section "$BLUE" '  Cores')  $cores @ ${freq} MHz\n\n"
+msg+="$(section "$BLUE" '  Cores')  $cores @ ${freq} MHz\n"
 
 # ── Top 5 by CPU ──
 msg+="$(section "$YELLOW" '  Top Processes')\n"

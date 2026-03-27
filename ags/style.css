@@ -53,6 +53,10 @@ window.urgency-critical .body {
 
 /* ── Info Panel ────────────────────────────────── */
 
+window.info-scrim {
+    background: transparent;
+}
+
 window.info-panel {
     background: transparent;
 }
@@ -62,26 +66,35 @@ window.info-panel {
     border: none;
 }
 
+.info-panel-button:hover .info-panel-container {
+    background: rgba(0, 0, 0, 0.92);
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
 .info-panel-container {
     background: rgba(0, 0, 0, 0.88);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
-    padding: 14px 18px;
-    min-width: 320px;
+    padding: 16px 20px;
+    min-width: 340px;
 }
 
 .info-panel-title {
     font-family: "JetBrainsMono Nerd Font", monospace;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: bold;
-    color: #e0e0e0;
-    margin-bottom: 8px;
+    letter-spacing: 1px;
+    color: #f0f0f0;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .info-panel-content {
     font-family: "JetBrainsMono Nerd Font", monospace;
-    font-size: 11px;
+    font-size: 12px;
     color: #e0e0e0;
+    line-height: 1.5;
 }
 
 /* ── Sidebar Scrim ────────────────────────────── */

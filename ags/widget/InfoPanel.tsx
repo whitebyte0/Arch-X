@@ -43,9 +43,33 @@ export function toggleInfo() {
 }
 
 export default function InfoPanel(gdkmonitor: Gdk.Monitor) {
-  const { TOP, RIGHT } = Astal.WindowAnchor
+  const { TOP, LEFT, RIGHT, BOTTOM } = Astal.WindowAnchor
 
-  return (
+  // transparent scrim — click outside to close panel
+  const scrim = (
+    <window
+      visible={visible}
+      name="info-scrim"
+      cssClasses={["info-scrim"]}
+      gdkmonitor={gdkmonitor}
+      exclusivity={Astal.Exclusivity.NORMAL}
+      anchor={TOP | LEFT | RIGHT | BOTTOM}
+      layer={Astal.Layer.TOP}
+      application={app}
+      keymode={Astal.Keymode.NONE}
+    >
+      <button
+        hexpand
+        vexpand
+        cssClasses={["scrim-button"]}
+        onClicked={() => hideInfo()}
+      >
+        <box />
+      </button>
+    </window>
+  )
+
+  const panel = (
     <window
       visible={visible}
       name="info-panel"
@@ -81,4 +105,6 @@ export default function InfoPanel(gdkmonitor: Gdk.Monitor) {
       </button>
     </window>
   )
+
+  return [scrim, panel]
 }

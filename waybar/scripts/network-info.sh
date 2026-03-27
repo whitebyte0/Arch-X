@@ -14,7 +14,6 @@ while IFS= read -r line; do
     [ -z "$addr" ] && addr="<span color='${DIM}'>no address</span>"
     msg+="  $iface  $addr\n"
 done < <(ip -br addr | grep UP)
-msg+="\n"
 
 # ── Gateway ──
 gw=$(ip route | awk '/default/{print $3; exit}')
@@ -32,7 +31,6 @@ if [ -n "$dig_result" ]; then
 else
     msg+="$(section "$PINK" '  Resolve')  <span color='${PINK}'>FAIL</span>\n"
 fi
-msg+="\n"
 
 # ── VPN status ──
 vpn_status=""
@@ -46,11 +44,10 @@ if [ -n "$vpn_status" ]; then
 else
     msg+="$(section "$DIM" '󰖂  VPN')  <span color='${DIM}'>inactive</span>\n"
 fi
-msg+="\n"
 
 # ── TCP connections ──
 tcp_est=$(ss -t state established 2>/dev/null | tail -n +2 | wc -l)
-msg+="$(section "$YELLOW" '  TCP')  $tcp_est established\n\n"
+msg+="$(section "$YELLOW" '  TCP')  $tcp_est established\n"
 
 # ── Listening ports ──
 msg+="$(section "$YELLOW" '  Listening')\n"

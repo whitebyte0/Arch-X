@@ -7,9 +7,11 @@ setopt AUTO_PUSHD           # cd pushes onto directory stack
 setopt PUSHD_IGNORE_DUPS    # no duplicates in dir stack
 setopt PUSHD_SILENT         # don't print stack after pushd
 setopt INTERACTIVE_COMMENTS # allow # comments in interactive shell
+setopt COMPLETE_ALIASES     # complete aliases as distinct commands
 
 # ── Completion ───────────────────────────────────────
 autoload -Uz compinit && compinit
+compdef _files ls la lt ll         # file completion for eza aliases
 zstyle ':completion:*' menu select                    # arrow-key menu
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'  # case-insensitive
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS} # colored completions
@@ -31,12 +33,14 @@ setopt HIST_IGNORE_SPACE    # space-prefixed commands not saved
 setopt HIST_REDUCE_BLANKS   # trim extra whitespace
 
 # ── fzf ──────────────────────────────────────────────
-source /usr/share/fzf/key-bindings.zsh
-source /usr/share/fzf/completion.zsh
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
 export FZF_DEFAULT_OPTS='--height=40% --layout=reverse --border'
 export FZF_CTRL_T_COMMAND='fd --type f --hidden --exclude .git'
 export FZF_ALT_C_COMMAND='fd --type d --hidden --exclude .git'
+export FZF_COMPLETION_TRIGGER='**'
+source /usr/share/fzf/key-bindings.zsh
+source /usr/share/fzf/completion.zsh
+bindkey '^I' fzf-completion         # Tab: fzf on **, normal completion otherwise
 
 # ── Key bindings ─────────────────────────────────────
 bindkey '^[[H'    beginning-of-line    # Home

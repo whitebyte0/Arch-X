@@ -10,9 +10,13 @@ Minimal Arch Linux + Hyprland development environment. One script to go from a f
 - AGS notification center (bottom bar + sidebar history, DND, action buttons)
 - Wofi (app launcher)
 - Wlogout (power menu)
-- Hyprlock + Hypridle (lock screen + auto-lock/suspend)
-- Hyprpaper (wallpaper)
+- Hyprlock + Hypridle (lock screen + auto-lock/suspend + screen dim)
+- swww (wallpaper daemon with animated transitions)
+- Hyprpicker (color picker)
+- Bemoji (emoji picker)
+- Hyprexpo (workspace overview grid)
 - SDDM (display manager with custom theme)
+- Bibata cursor theme
 - adw-gtk3-dark theme
 
 **Terminal & Shell**
@@ -55,6 +59,8 @@ Minimal Arch Linux + Hyprland development environment. One script to go from a f
 - Clipboard history (Super+V)
 - `notif` — notification control (mode, DND, focus-dismiss, history)
 - `doctor` — diagnostic health check (SDDM, GPU, symlinks, services, packages)
+- `hbind` — Hyprland keybinding manager (list, add, remove, edit)
+- `toggle-scratchpad` — dropdown scratchpad terminal
 - imv (lightweight Wayland image viewer)
 
 **Hardware**
@@ -163,6 +169,10 @@ Reports pass/fail for: display manager, Hyprland session, GPU drivers, config sy
 |-----|--------|
 | Super+Return | Ghostty terminal |
 | Super+D | Wofi launcher |
+| Super+` | Scratchpad terminal (dropdown toggle) |
+| Super+C | Color picker (hex → clipboard) |
+| Super+. | Emoji picker |
+| Super+Tab | Workspace overview (hyprexpo) |
 | Super+Q | Close window |
 | Super+M | Maximize toggle |
 | Super+F | Fullscreen toggle |
@@ -218,7 +228,7 @@ LSP servers are installed automatically via Mason on first launch. Run `:Mason` 
 ├── lib/
 │   └── common.sh       # Shared functions (GPU, packages, logging)
 ├── .zshrc              # Shell config
-├── hypr/               # Hyprland + Hyprlock + Hypridle + Hyprpaper
+├── hypr/               # Hyprland + Hyprlock + Hypridle
 ├── waybar/             # Status bar + scripts
 ├── ghostty/            # Terminal
 ├── wofi/               # App launcher
@@ -231,5 +241,5 @@ LSP servers are installed automatically via Mason on first launch. Run `:Mason` 
 ├── ssh/                # SSH config template
 ├── sddm/               # SDDM display manager config
 ├── sddm-theme/         # Custom SDDM login theme
-└── bin/                # CLI tools (doctor, setup-deploy-sshkey, mount-ssh, fetch-wallpaper, etc.)
+└── bin/                # CLI tools (doctor, hbind, toggle-scratchpad, fetch-wallpaper, etc.)
 ```

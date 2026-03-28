@@ -5,3 +5,6 @@ bluetuith
 snixembed
 aylurs-gtk-shell
 libastal-meta
+swww
+bemoji
+bibata-cursor-theme-bin

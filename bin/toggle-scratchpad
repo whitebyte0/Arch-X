@@ -1,0 +1,10 @@
+#!/bin/bash
+# Toggle a scratchpad terminal using Hyprland special workspaces
+
+if hyprctl clients -j | jq -e '.[] | select(.class == "scratchpad")' >/dev/null 2>&1; then
+    hyprctl dispatch togglespecialworkspace scratchpad
+else
+    hyprctl dispatch exec "[workspace special:scratchpad] ghostty --class=scratchpad"
+    sleep 0.3
+    hyprctl dispatch togglespecialworkspace scratchpad
+fi

@@ -5,7 +5,8 @@ gjs
 wofi
 hyprlock
 hypridle
-hyprpaper
+hyprpicker
+wtype
 grim
 slurp
 wf-recorder

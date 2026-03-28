@@ -113,6 +113,16 @@ hyprctl dispatch exec waybar 2>/dev/null
 hyprctl dispatch exec "ags run --gtk 4 -d ~/.config/ags/" 2>/dev/null
 info "Waybar, AGS, and snixembed restarted"
 
+# Ensure swww is running (replaces hyprpaper)
+if ! pgrep -x swww-daemon >/dev/null; then
+    hyprctl dispatch exec "swww-daemon" 2>/dev/null
+    sleep 0.5
+    swww img ~/Pictures/wallpaper.jpg 2>/dev/null
+    info "swww-daemon started"
+else
+    info "swww-daemon running ✓"
+fi
+
 info "Run 'source ~/.zshrc' to apply shell changes"
 
 # ─── [6/7] Verify services ──────────────────────────

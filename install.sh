@@ -159,6 +159,16 @@ info "Scripts marked executable"
 nvim --headless "+Lazy! sync" +qa 2>/dev/null || \
     warn "Neovim plugin sync skipped — run 'nvim' to install plugins on first launch"
 
+# Hyprland plugins (hyprexpo for workspace overview)
+if command -v hyprpm &>/dev/null; then
+    hyprpm update 2>/dev/null || true
+    hyprpm add https://github.com/hyprwm/hyprland-plugins 2>/dev/null || true
+    hyprpm enable hyprexpo 2>/dev/null && info "hyprexpo plugin enabled" || \
+        warn "hyprexpo install failed — run 'hyprpm add https://github.com/hyprwm/hyprland-plugins && hyprpm enable hyprexpo' manually"
+else
+    warn "hyprpm not found — hyprexpo plugin skipped"
+fi
+
 # ─── [10/10] Summary ─────────────────────────────────
 
 step "10/10" "Setup complete!"

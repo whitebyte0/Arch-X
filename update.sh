@@ -103,13 +103,15 @@ step "5/7" "Reloading services..."
 # Reload Hyprland config
 hyprctl reload 2>/dev/null && info "Hyprland reloaded" || warn "Hyprland not running"
 
-# Restart waybar and AGS
+# Restart waybar, AGS, and snixembed (tray bridge)
 killall waybar 2>/dev/null || true
+killall snixembed 2>/dev/null || true
 ags quit 2>/dev/null || true
 sleep 0.5
+hyprctl dispatch exec "snixembed --fork" 2>/dev/null
 hyprctl dispatch exec waybar 2>/dev/null
 hyprctl dispatch exec "ags run --gtk 4 -d ~/.config/ags/" 2>/dev/null
-info "Waybar and AGS restarted"
+info "Waybar, AGS, and snixembed restarted"
 
 info "Run 'source ~/.zshrc' to apply shell changes"
 

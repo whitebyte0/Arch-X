@@ -91,7 +91,7 @@
     },
 
     "custom/recording": {
-        "exec": "pgrep wf-recorder > /dev/null && echo '{\"text\": \"󰑊\", \"class\": \"active\"}' || echo '{\"text\": \"\", \"class\": \"\"}'",
+        "exec": "pgrep wf-recorder > /dev/null && echo '{\"text\": \"REC\", \"class\": \"active\"}'",
         "return-type": "json",
         "interval": 2,
         "format": "{}"
@@ -111,6 +111,7 @@
         "format-connected-battery": "󰂯 {device_alias} {device_battery_percentage}%",
         "format-disabled": "󰂲",
         "format-off": "󰂲",
+        "format-no-controller": "",
         "on-click": "ghostty -e bluetuith",
         "tooltip-format": "{controller_alias}\n{num_connections} connected",
         "tooltip-format-connected": "{controller_alias}\n{num_connections} connected\n\n{device_enumerate}",

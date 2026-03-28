@@ -54,6 +54,8 @@ Minimal Arch Linux + Hyprland development environment. One script to go from a f
 - Git aliases (gs, ga, gc, gd, gl, gp, gpl)
 - Clipboard history (Super+V)
 - `notif` — notification control (mode, DND, focus-dismiss, history)
+- `doctor` — diagnostic health check (SDDM, GPU, symlinks, services, packages)
+- imv (lightweight Wayland image viewer)
 
 **Hardware**
 - GPU auto-detection (NVIDIA, AMD, Intel)
@@ -143,7 +145,17 @@ After making changes to the repo:
 cd ~/Arch-X && git pull && ./update.sh
 ```
 
-This syncs packages, verifies symlinks, updates SDDM theme, and reloads Hyprland, Waybar, and AGS live — no reboot needed.
+This syncs packages, verifies symlinks, updates SDDM theme, verifies systemd services, and reloads Hyprland, Waybar, and AGS live — no reboot needed.
+
+### Diagnostics
+
+Run `doctor` to check system health:
+
+```bash
+doctor
+```
+
+Reports pass/fail for: display manager, Hyprland session, GPU drivers, config symlinks, systemd services, shell, and key packages.
 
 ## Keybindings
 
@@ -170,8 +182,10 @@ This syncs packages, verifies symlinks, updates SDDM theme, and reloads Hyprland
 | Print | Screenshot (full screen → clipboard) |
 | Shift+Print | Screenshot (region → clipboard) |
 | Super+Print | Screenshot (region → file) |
-| Super+S | Screen record (full) |
+| Super+S | Screen record (full monitor) |
+| Super+Shift+S | Stop screen recording |
 | Super+E | Screen record (region) |
+| Super+Shift+E | Stop screen recording |
 | XF86Audio keys | Volume up/down/mute |
 | XF86Brightness keys | Brightness up/down |
 | XF86AudioPlay/Next/Prev | Media controls |
@@ -217,5 +231,5 @@ LSP servers are installed automatically via Mason on first launch. Run `:Mason` 
 ├── ssh/                # SSH config template
 ├── sddm/               # SDDM display manager config
 ├── sddm-theme/         # Custom SDDM login theme
-└── bin/                # CLI tools (setup-deploy-sshkey, mount-ssh, fetch-wallpaper, etc.)
+└── bin/                # CLI tools (doctor, setup-deploy-sshkey, mount-ssh, fetch-wallpaper, etc.)
 ```

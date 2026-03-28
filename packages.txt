@@ -70,6 +70,7 @@ libnotify
 firefox
 telegram-desktop
 python-pipx
+imv
 
 # Graphics (base)
 mesa

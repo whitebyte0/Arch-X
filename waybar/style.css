@@ -129,13 +129,27 @@ window#waybar {
     -gtk-icon-effect: dim;
 }
 
+#tray > .active:hover,
+#tray > .passive:hover {
+    border-bottom: 2px solid rgba(255, 255, 255, 0.6);
+}
+
 #tray > .needs-attention {
     -gtk-icon-effect: highlight;
     background: rgba(249, 226, 175, 0.1);
-    border-radius: 4px;
+}
+
+#tray > .needs-attention:hover {
+    border-bottom: 2px solid rgba(255, 255, 255, 0.6);
 }
 
 /* ── Recording indicator ──────────────────────── */
+
+#custom-recording {
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+}
 
 #custom-recording.active {
     padding: 0 10px;
@@ -174,5 +188,5 @@ window#waybar {
 /* ── Blink animation ───────────────────────────── */
 
 @keyframes blink {
-    to { color: transparent; }
+    50% { color: transparent; background: transparent; }
 }

@@ -1,14 +1,9 @@
-<span color='#ffffff'><b>  Interfaces</b></span>
-  wlp2s0  192.168.10.20/24 fe80::c08d:19ca:f71e:f995/64
-
-<span color='#89b4fa'><b>  Gateway</b></span>  192.168.10.1
-<span color='#89b4fa'><b>  DNS</b></span>  192.168.10.1 
-<span color='#f38ba8'><b>  Resolve</b></span>  <span color='#f38ba8'>FAIL</span>
-
-<span color='#6c7086'><b>󰖂  VPN</b></span>  <span color='#6c7086'>inactive</span>
-
-<span color='#f9e2af'><b>  TCP</b></span>  5 established
-
-<span color='#f9e2af'><b>  Listening</b></span>
-  :45937  
+<span color='#ffffff'><b>  Load</b></span>  0.35  0.53  1.30
+<span color='#89b4fa'><b>  Cores</b></span>  20 @ 1662 MHz
+<span color='#f9e2af'><b>  Top Processes</b></span>
+  whiteby+   2.6%  waybar
+  whiteby+   0.9%  /opt/brave-bin/brave --type=rendere
+  whiteby+   0.9%  ghostty
+  whiteby+   0.9%  /opt/claude-code/bin/claude --resum
+  whiteby+   0.5%  Hyprland --watchdog-fd 4
 

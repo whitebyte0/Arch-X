@@ -53,7 +53,17 @@ setup_gpu() {
             sudo sed -i '/^#\[multilib\]/,/^#Include/ s/^#//' /etc/pacman.conf
             sudo pacman -Sy
         fi
-        sudo pacman -S --needed --noconfirm linux-headers nvidia-dkms nvidia-utils lib32-nvidia-utils
+        # Detect existing nvidia driver variant to avoid conflicts
+        if pacman -Q nvidia-open &>/dev/null; then
+            NVIDIA_PKG=nvidia-open
+        elif pacman -Q nvidia-open-dkms &>/dev/null; then
+            NVIDIA_PKG=nvidia-open-dkms
+        elif pacman -Q nvidia &>/dev/null; then
+            NVIDIA_PKG=nvidia
+        else
+            NVIDIA_PKG=nvidia-open
+        fi
+        sudo pacman -S --needed --noconfirm linux-headers "$NVIDIA_PKG" nvidia-utils lib32-nvidia-utils
         cat > "$HOME/.config/hypr-local/gpu.conf" << 'GPUEOF'
 env = LIBVA_DRIVER_NAME,nvidia
 env = __GLX_VENDOR_LIBRARY_NAME,nvidia

@@ -1,9 +1,16 @@
-<span color='#ffffff'><b>  Load</b></span>  0.35  0.53  1.30
-<span color='#89b4fa'><b>  Cores</b></span>  20 @ 1662 MHz
-<span color='#f9e2af'><b>  Top Processes</b></span>
-  whiteby+   2.6%  waybar
-  whiteby+   0.9%  /opt/brave-bin/brave --type=rendere
-  whiteby+   0.9%  ghostty
-  whiteby+   0.9%  /opt/claude-code/bin/claude --resum
-  whiteby+   0.5%  Hyprland --watchdog-fd 4
+<span color='#ffffff'><b>  Interfaces</b></span>
+  eno1  192.168.10.12/24 fe80::15dc:3644:f173:3ec5/64
+  br-ee54453dc287  172.19.0.1/16 fe80::a415:eaff:fe57:5152/64
+  vethb118d6c@if2  fe80::c69:54ff:fe5b:90f0/64
+<span color='#89b4fa'><b>  Gateway</b></span>  192.168.10.1
+<span color='#89b4fa'><b>  DNS</b></span>  192.168.10.1 
+<span color='#ffffff'><b>  Resolve</b></span>  <span color='#ffffff'>OK</span>  <span color='#6c7086'>(209.126.35.79)</span>
+<span color='#6c7086'><b>󰖂  VPN</b></span>  <span color='#6c7086'>inactive</span>
+<span color='#f9e2af'><b>  TCP</b></span>  15 established
+<span color='#f9e2af'><b>  Listening</b></span>
+  :53  
+  :2049  
+  :5432  
+  :10809  
+  :33551  
 

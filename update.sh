@@ -125,6 +125,13 @@ fi
 
 info "Run 'source ~/.zshrc' to apply shell changes"
 
+# Hyprland plugins
+if command -v hyprpm &>/dev/null && hyprpm list 2>/dev/null | grep -q hyprexpo; then
+    info "hyprexpo plugin ✓"
+else
+    warn "hyprexpo not installed — run: hyprpm update && hyprpm add https://github.com/hyprwm/hyprland-plugins && hyprpm enable hyprexpo"
+fi
+
 # ─── [6/7] Verify services ──────────────────────────
 
 step "6/7" "Verifying systemd services..."

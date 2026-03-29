@@ -20,6 +20,10 @@ cursor-style-blink = true
 selection-background = #2a2a2a
 selection-foreground = #ffffff
 
+# ── Clipboard ─────────────────────────────────────
+clipboard-trim-trailing-spaces = true
+copy-on-select = clipboard
+
 # ── Color palette ───────────────────────────────────
 # black
 palette = 0=#1a1a1a

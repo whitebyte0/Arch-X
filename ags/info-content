@@ -1,16 +1,9 @@
-<span color='#ffffff'><b>  Interfaces</b></span>
-  eno1  192.168.10.12/24 fe80::15dc:3644:f173:3ec5/64
-  br-ee54453dc287  172.19.0.1/16 fe80::a415:eaff:fe57:5152/64
-  vethb118d6c@if2  fe80::c69:54ff:fe5b:90f0/64
-<span color='#89b4fa'><b>  Gateway</b></span>  192.168.10.1
-<span color='#89b4fa'><b>  DNS</b></span>  192.168.10.1 
-<span color='#ffffff'><b>  Resolve</b></span>  <span color='#ffffff'>OK</span>  <span color='#6c7086'>(209.126.35.79)</span>
-<span color='#6c7086'><b>󰖂  VPN</b></span>  <span color='#6c7086'>inactive</span>
-<span color='#f9e2af'><b>  TCP</b></span>  15 established
-<span color='#f9e2af'><b>  Listening</b></span>
-  :53  
-  :2049  
-  :5432  
-  :10809  
-  :33551  
+<span color='#ffffff'><b>  RAM</b></span>  14Gi / 15Gi  <span color='#6c7086'>(avail: 1.1Gi)</span>
+<span color='#89b4fa'><b>  Swap</b></span>  511Mi / 511Mi
+<span color='#f9e2af'><b>  Top Processes</b></span>
+  1001      15.6%  zerofs run --config /config/zerofs.
+  whiteby+  15.0%  /home/whitebyte/Tools/net-x-restapi
+  whiteby+  11.4%  /home/whitebyte/Tools/net-x-restapi
+  whiteby+  11.0%  /home/whitebyte/Tools/net-x-restapi
+  whiteby+   4.1%  /usr/lib/firefox/firefox
 

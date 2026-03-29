@@ -96,6 +96,24 @@ chmod +x "$DOTDIR/waybar/scripts/"*.sh 2>/dev/null || true
 chmod +x "$DOTDIR/bin/"* 2>/dev/null || true
 info "Scripts ✓"
 
+# External tools
+if [ -f "$HOME/Tools/netns-x/netns-x" ]; then
+    sudo install -m 755 "$HOME/Tools/netns-x/netns-x" /usr/local/bin/netns-x
+    info "netns-x → /usr/local/bin/netns-x ✓"
+
+    # Ensure ip_forward is enabled (required for netns-x NAT)
+    if ! sysctl -n net.ipv4.ip_forward 2>/dev/null | grep -q 1; then
+        sudo sysctl -w net.ipv4.ip_forward=1 >/dev/null
+        info "ip_forward enabled"
+    fi
+    if [ ! -f /etc/sysctl.d/99-ip-forward.conf ]; then
+        echo "net.ipv4.ip_forward=1" | sudo tee /etc/sysctl.d/99-ip-forward.conf >/dev/null
+        info "ip_forward persisted in /etc/sysctl.d/99-ip-forward.conf"
+    fi
+else
+    warn "netns-x not found at ~/Tools/netns-x — skipping"
+fi
+
 # ─── [5/7] Reload Hyprland ───────────────────────────
 
 step "5/7" "Reloading services..."

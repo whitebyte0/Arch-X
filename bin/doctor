@@ -207,13 +207,29 @@ fi
 
 section "Key Packages"
 
-for pkg in hyprland waybar aylurs-gtk-shell wofi hyprlock ghostty neovim sddm snixembed wlogout; do
+for pkg in hyprland waybar aylurs-gtk-shell wofi hyprlock ghostty neovim sddm snixembed wlogout iptables; do
     if pacman -Q "$pkg" &>/dev/null || yay -Q "$pkg" &>/dev/null; then
         pass "$pkg"
     else
         fail "$pkg not installed"
     fi
 done
+
+# ─── Network Namespaces ────────────────────────────
+
+section "Network Namespaces (netns)"
+
+if [ -x /usr/local/bin/netns-x ]; then
+    pass "netns-x installed"
+else
+    fail "netns-x not installed — run update.sh (requires ~/Tools/netns-x)"
+fi
+
+if sysctl -n net.ipv4.ip_forward 2>/dev/null | grep -q 1; then
+    pass "ip_forward enabled"
+else
+    warn "ip_forward disabled — netns NAT won't work. Enable: sudo sysctl -w net.ipv4.ip_forward=1"
+fi
 
 # ─── Summary ────────────────────────────────────────
 

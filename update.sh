@@ -121,15 +121,13 @@ step "5/7" "Reloading services..."
 # Reload Hyprland config
 hyprctl reload 2>/dev/null && info "Hyprland reloaded" || warn "Hyprland not running"
 
-# Restart waybar, AGS, and snixembed (tray bridge)
+# Restart waybar and AGS
 killall waybar 2>/dev/null || true
-killall snixembed 2>/dev/null || true
 ags quit 2>/dev/null || true
 sleep 0.5
-hyprctl dispatch exec "snixembed --fork" 2>/dev/null
 hyprctl dispatch exec waybar 2>/dev/null
 hyprctl dispatch exec "ags run --gtk 4 -d ~/.config/ags/" 2>/dev/null
-info "Waybar, AGS, and snixembed restarted"
+info "Waybar and AGS restarted"
 
 # Ensure swww is running (replaces hyprpaper)
 if ! pgrep -x swww-daemon >/dev/null; then

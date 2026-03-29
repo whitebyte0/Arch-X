@@ -2,7 +2,6 @@ wlogout
 adw-gtk3
 signal-desktop
 bluetuith
-snixembed
 aylurs-gtk-shell
 libastal-meta
 swww

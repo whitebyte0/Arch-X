@@ -125,9 +125,8 @@ hyprctl reload 2>/dev/null && info "Hyprland reloaded" || warn "Hyprland not run
 killall waybar 2>/dev/null || true
 ags quit 2>/dev/null || true
 sleep 0.5
-hyprctl dispatch exec waybar 2>/dev/null
-hyprctl dispatch exec "ags run --gtk 4 -d ~/.config/ags/" 2>/dev/null
-info "Waybar and AGS restarted"
+hyprctl dispatch exec waybar 2>/dev/null && info "Waybar restarted" || warn "Could not restart Waybar (is Hyprland running?)"
+hyprctl dispatch exec "ags run --gtk 4 -d ~/.config/ags/" 2>/dev/null && info "AGS restarted" || warn "Could not restart AGS"
 
 # Ensure swww is running (replaces hyprpaper)
 if ! pgrep -x swww-daemon >/dev/null; then
@@ -142,10 +141,19 @@ fi
 info "Run 'source ~/.zshrc' to apply shell changes"
 
 # Hyprland plugins
-if command -v hyprpm &>/dev/null && hyprpm list 2>/dev/null | grep -q hyprexpo; then
-    info "hyprexpo plugin ✓"
+if command -v hyprpm &>/dev/null; then
+    hyprpm update -f 2>/dev/null
+    if hyprpm list 2>/dev/null | grep -q hyprexpo; then
+        hyprpm enable hyprexpo 2>/dev/null
+        info "hyprexpo plugin ✓"
+    else
+        hyprpm add https://github.com/hyprwm/hyprland-plugins 2>/dev/null && \
+            hyprpm enable hyprexpo 2>/dev/null && \
+            info "hyprexpo plugin installed" || \
+            warn "hyprexpo install failed — run manually: hyprpm add https://github.com/hyprwm/hyprland-plugins && hyprpm enable hyprexpo"
+    fi
 else
-    warn "hyprexpo not installed — run: hyprpm update && hyprpm add https://github.com/hyprwm/hyprland-plugins && hyprpm enable hyprexpo"
+    warn "hyprpm not found — hyprexpo plugin skipped"
 fi
 
 # ─── [6/7] Verify services ──────────────────────────

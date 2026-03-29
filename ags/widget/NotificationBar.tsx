@@ -8,10 +8,10 @@ import { notifd, mode, dnd, recordNotification } from "../lib/notifications"
 const TIMEOUT_LOW = 8000
 const TIMEOUT_NORMAL = 12000
 
-let _hide: (() => void) | null = null
+const _hiders: Set<() => void> = new Set()
 
 export function dismissAll() {
-  if (_hide) _hide()
+  _hiders.forEach((h) => h())
 }
 
 export default function NotificationBar(gdkmonitor: Gdk.Monitor) {
@@ -56,7 +56,7 @@ export default function NotificationBar(gdkmonitor: Gdk.Monitor) {
     setBody("")
   }
 
-  _hide = hide
+  _hiders.add(hide)
 
   function show(n: Notifd.Notification) {
     clearTimer()

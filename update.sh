@@ -118,7 +118,30 @@ fi
 
 step "5/7" "Reloading services..."
 
-# Reload Hyprland config
+# Hyprland plugins — must be loaded BEFORE hyprctl reload to avoid "invalid dispatcher"
+if command -v hyprpm &>/dev/null; then
+    # Ensure hyprpm build dependencies are installed
+    sudo pacman -S --needed --noconfirm cmake cpio pkgconf git gcc 2>/dev/null
+    # Rebuild plugins against current Hyprland version
+    if ! hyprpm update 2>/dev/null; then
+        warn "hyprpm update failed — rebuilding plugins"
+        hyprpm remove hyprland-plugins 2>/dev/null || true
+        hyprpm add https://github.com/hyprwm/hyprland-plugins 2>/dev/null || true
+    fi
+    if hyprpm list 2>/dev/null | grep -q hyprexpo; then
+        hyprpm enable hyprexpo 2>/dev/null
+        info "hyprexpo plugin ✓"
+    else
+        hyprpm add https://github.com/hyprwm/hyprland-plugins 2>/dev/null && \
+            hyprpm enable hyprexpo 2>/dev/null && \
+            info "hyprexpo plugin installed" || \
+            warn "hyprexpo install failed — run manually: hyprpm add https://github.com/hyprwm/hyprland-plugins && hyprpm enable hyprexpo"
+    fi
+else
+    warn "hyprpm not found — hyprexpo plugin skipped"
+fi
+
+# Reload Hyprland config (plugins are loaded above, so hyprexpo:expo dispatcher is valid)
 hyprctl reload 2>/dev/null && info "Hyprland reloaded" || warn "Hyprland not running"
 
 # Restart waybar and AGS
@@ -139,22 +162,6 @@ else
 fi
 
 info "Run 'source ~/.zshrc' to apply shell changes"
-
-# Hyprland plugins
-if command -v hyprpm &>/dev/null; then
-    hyprpm update -f 2>/dev/null
-    if hyprpm list 2>/dev/null | grep -q hyprexpo; then
-        hyprpm enable hyprexpo 2>/dev/null
-        info "hyprexpo plugin ✓"
-    else
-        hyprpm add https://github.com/hyprwm/hyprland-plugins 2>/dev/null && \
-            hyprpm enable hyprexpo 2>/dev/null && \
-            info "hyprexpo plugin installed" || \
-            warn "hyprexpo install failed — run manually: hyprpm add https://github.com/hyprwm/hyprland-plugins && hyprpm enable hyprexpo"
-    fi
-else
-    warn "hyprpm not found — hyprexpo plugin skipped"
-fi
 
 # ─── [6/7] Verify services ──────────────────────────
 

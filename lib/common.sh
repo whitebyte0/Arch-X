@@ -56,12 +56,15 @@ setup_gpu() {
         # Detect existing nvidia driver variant to avoid conflicts
         if pacman -Q nvidia-open &>/dev/null; then
             NVIDIA_PKG=nvidia-open
-        elif pacman -Q nvidia-open-dkms &>/dev/null; then
-            NVIDIA_PKG=nvidia-open-dkms
         elif pacman -Q nvidia &>/dev/null; then
             NVIDIA_PKG=nvidia
         else
             NVIDIA_PKG=nvidia-open
+        fi
+        # Remove conflicting dkms variant if present
+        if pacman -Q nvidia-open-dkms &>/dev/null && [ "$NVIDIA_PKG" != "nvidia-open-dkms" ]; then
+            sudo pacman -Rdd --noconfirm nvidia-open-dkms 2>/dev/null || true
+            info "Removed conflicting nvidia-open-dkms"
         fi
         sudo pacman -S --needed --noconfirm linux-headers "$NVIDIA_PKG" nvidia-utils lib32-nvidia-utils
         cat > "$HOME/.config/hypr-local/gpu.conf" << 'GPUEOF'

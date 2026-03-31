@@ -161,6 +161,7 @@ nvim --headless "+Lazy! sync" +qa 2>/dev/null || \
 
 # Hyprland plugins (hyprexpo for workspace overview)
 if command -v hyprpm &>/dev/null; then
+    sudo pacman -S --needed --noconfirm cmake cpio pkgconf git gcc 2>/dev/null
     hyprpm update 2>/dev/null || true
     hyprpm add https://github.com/hyprwm/hyprland-plugins 2>/dev/null || true
     hyprpm enable hyprexpo 2>/dev/null && info "hyprexpo plugin enabled" || \

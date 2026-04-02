@@ -3,8 +3,6 @@ import style from "./style.css"
 import NotificationBar, { dismissAll } from "./widget/NotificationBar"
 import NotificationSidebar, { toggleSidebar } from "./widget/NotificationSidebar"
 import InfoPanel, { showInfo, hideInfo } from "./widget/InfoPanel"
-import { readFile } from "ags/file"
-import GLib from "gi://GLib"
 import { setMode, setDnd, toggleDnd, dnd, history, clearHistory, focusDismiss, setFocusDismiss, toggleFocusDismiss } from "./lib/notifications"
 
 app.start({
@@ -27,11 +25,7 @@ app.start({
 
       case "info": {
         const infoTitle = args[1] || ""
-        const infoFile = GLib.get_home_dir() + "/.config/ags/info-content"
-        let infoContent = ""
-        try {
-          infoContent = readFile(infoFile).trim()
-        } catch {}
+        const infoContent = args.slice(2).join(" ")
         showInfo(infoTitle, infoContent, 15000)
         res("ok")
         break

@@ -24,5 +24,5 @@ top_procs=$(ps aux --sort=-%cpu --no-headers | head -5 | awk '{
 }' | sanitize)
 msg+="$top_procs\n"
 
-echo -e "$msg" > "$HOME/.config/ags/info-content"
-ags request info CPU 2>/dev/null || notify-send -t 10000 "CPU" "$msg"
+rendered=$(echo -e "$msg")
+ags request info CPU "$rendered" 2>/dev/null || notify-send -t 10000 "CPU" "$msg"

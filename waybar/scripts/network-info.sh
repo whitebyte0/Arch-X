@@ -65,5 +65,5 @@ else
     msg+="  <span color='${DIM}'>none</span>\n"
 fi
 
-echo -e "$msg" > "$HOME/.config/ags/info-content"
-ags request info Network 2>/dev/null || notify-send -t 12000 "Network" "$msg"
+rendered=$(echo -e "$msg")
+ags request info Network "$rendered" 2>/dev/null || notify-send -t 12000 "Network" "$msg"

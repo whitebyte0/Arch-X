@@ -1,9 +1,0 @@
-<span color='#ffffff'><b>  RAM</b></span>  14Gi / 15Gi  <span color='#6c7086'>(avail: 1.1Gi)</span>
-<span color='#89b4fa'><b>  Swap</b></span>  511Mi / 511Mi
-<span color='#f9e2af'><b>  Top Processes</b></span>
-  1001      15.6%  zerofs run --config /config/zerofs.
-  whiteby+  15.0%  /home/whitebyte/Tools/net-x-restapi
-  whiteby+  11.4%  /home/whitebyte/Tools/net-x-restapi
-  whiteby+  11.0%  /home/whitebyte/Tools/net-x-restapi
-  whiteby+   4.1%  /usr/lib/firefox/firefox
-

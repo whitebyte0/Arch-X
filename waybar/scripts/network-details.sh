@@ -38,5 +38,5 @@ msg+="$(section "$BLUE" '  Routes')\n"
 routes=$(ip route 2>/dev/null | head -8 | sanitize)
 msg+="$routes\n"
 
-echo -e "$msg" > "$HOME/.config/ags/info-content"
-ags request info "Network Details" 2>/dev/null || notify-send -t 15000 "Network Details" "$msg"
+rendered=$(echo -e "$msg")
+ags request info "Network Details" "$rendered" 2>/dev/null || notify-send -t 15000 "Network Details" "$msg"

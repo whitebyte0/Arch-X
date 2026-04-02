@@ -12,7 +12,7 @@
 #   notif clear               Clear notification history
 #
 
-MODE_FILE="$HOME/.config/ags/notification-mode"
+MODE_FILE="$HOME/.config/arch-x/notification-mode"
 
 get_mode() {
     if [ -f "$MODE_FILE" ]; then

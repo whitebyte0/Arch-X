@@ -3,9 +3,12 @@ import { readFile, writeFile } from "ags/file"
 import Notifd from "gi://AstalNotifd?version=0.1"
 import GLib from "gi://GLib"
 
-const MODE_FILE = GLib.get_home_dir() + "/.config/ags/notification-mode"
-const DND_FILE = GLib.get_home_dir() + "/.config/ags/notification-dnd"
-const FOCUS_DISMISS_FILE = GLib.get_home_dir() + "/.config/ags/notification-focus-dismiss"
+const STATE_DIR = GLib.get_home_dir() + "/.config/arch-x"
+GLib.mkdir_with_parents(STATE_DIR, 0o755)
+
+const MODE_FILE = STATE_DIR + "/notification-mode"
+const DND_FILE = STATE_DIR + "/notification-dnd"
+const FOCUS_DISMISS_FILE = STATE_DIR + "/notification-focus-dismiss"
 
 // ── Notifd singleton ──────────────────────────────
 

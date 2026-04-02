@@ -52,7 +52,12 @@ return {
   -- ── Treesitter (syntax highlighting) ──────────────
   {
     "nvim-treesitter/nvim-treesitter",
+    lazy = false,
     build = ":TSUpdate",
+    config = function(_, opts)
+      vim.opt.runtimepath:append(vim.fn.stdpath("data") .. "/lazy/nvim-treesitter/runtime")
+      require("nvim-treesitter").setup(opts)
+    end,
     opts = {
       ensure_installed = {
         "lua", "vim", "vimdoc",

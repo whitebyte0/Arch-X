@@ -36,6 +36,7 @@ qt6-wayland
 
 # Development
 neovim
+tree-sitter
 git
 docker
 docker-compose

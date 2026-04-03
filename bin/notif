@@ -10,6 +10,10 @@
 #   notif dnd on|off|toggle   Do Not Disturb control
 #   notif focus-dismiss on|off  Close sidebar on click outside (default: off)
 #   notif clear               Clear notification history
+#   notif filter list                                  List filter rules
+#   notif filter add --app|--summary|--body|--all exclude|include <regex>
+#   notif filter rm <index>                            Remove filter rule
+#   notif filter test <text>                           Test text against rules
 #
 
 MODE_FILE="$HOME/.config/arch-x/notification-mode"
@@ -76,8 +80,62 @@ case "${1:-status}" in
         ags request clear 2>/dev/null || echo "AGS not running"
         echo "Notification history cleared"
         ;;
+    filter)
+        sub="${2}"
+        case "$sub" in
+            list)
+                result=$(ags request filter list 2>/dev/null)
+                echo "${result:-AGS not running}"
+                ;;
+            add)
+                field="${3}"
+                action="${4}"
+                pattern="${5}"
+                # Parse --field flag
+                case "$field" in
+                    --app)     field="app" ;;
+                    --summary) field="summary" ;;
+                    --body)    field="body" ;;
+                    --all)     field="all" ;;
+                    *)
+                        echo "Usage: notif filter add --app|--summary|--body|--all exclude|include <regex>"
+                        exit 1
+                        ;;
+                esac
+                if [ -z "$action" ] || [ -z "$pattern" ]; then
+                    echo "Usage: notif filter add --app|--summary|--body|--all exclude|include <regex>"
+                    exit 1
+                fi
+                result=$(ags request filter add "$field" "$action" "$pattern" 2>/dev/null)
+                echo "${result:-AGS not running}"
+                ;;
+            rm)
+                idx="${3}"
+                if [ -z "$idx" ]; then
+                    echo "Usage: notif filter rm <index>"
+                    exit 1
+                fi
+                result=$(ags request filter rm "$idx" 2>/dev/null)
+                echo "${result:-AGS not running}"
+                ;;
+            test)
+                shift 2
+                text="$*"
+                if [ -z "$text" ]; then
+                    echo "Usage: notif filter test <text>"
+                    exit 1
+                fi
+                result=$(ags request filter test "$text" 2>/dev/null)
+                echo "${result:-AGS not running}"
+                ;;
+            *)
+                echo "Usage: notif filter {list|add|rm|test}"
+                exit 1
+                ;;
+        esac
+        ;;
     *)
-        echo "Usage: notif {status|reserved|dynamic|overlay|dnd|focus-dismiss|clear}"
+        echo "Usage: notif {status|reserved|dynamic|overlay|dnd|focus-dismiss|clear|filter}"
         exit 1
         ;;
 esac

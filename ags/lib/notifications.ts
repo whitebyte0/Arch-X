@@ -9,6 +9,7 @@ GLib.mkdir_with_parents(STATE_DIR, 0o755)
 const MODE_FILE = STATE_DIR + "/notification-mode"
 const DND_FILE = STATE_DIR + "/notification-dnd"
 const FOCUS_DISMISS_FILE = STATE_DIR + "/notification-focus-dismiss"
+const FILTERS_FILE = STATE_DIR + "/notification-filters.json"
 
 // ── Notifd singleton ──────────────────────────────
 
@@ -67,6 +68,83 @@ export function toggleFocusDismiss() {
   setFocusDismiss(!focusDismiss.peek())
 }
 
+// ── Notification filters ─────────────────────────
+
+export type FilterField = "app" | "summary" | "body" | "all"
+
+export interface FilterRule {
+  field: FilterField
+  pattern: string
+  action: "exclude" | "include"
+}
+
+function loadFilters(): FilterRule[] {
+  try {
+    const raw = readFile(FILTERS_FILE).trim()
+    if (!raw) return []
+    return JSON.parse(raw) as FilterRule[]
+  } catch {
+    return []
+  }
+}
+
+function saveFilters(): void {
+  writeFile(FILTERS_FILE, JSON.stringify(filters.peek(), null, 2))
+}
+
+const [filters, _setFilters] = createState<FilterRule[]>(loadFilters())
+
+export { filters }
+
+export function addFilter(field: FilterField, action: "exclude" | "include", pattern: string): void {
+  new RegExp(pattern) // validate — throws if invalid
+  const updated = [...filters.peek(), { field, pattern, action }]
+  _setFilters(updated)
+  saveFilters()
+}
+
+export function removeFilter(index: number): void {
+  const current = filters.peek()
+  if (index < 0 || index >= current.length) throw new Error("Index out of range")
+  const updated = current.filter((_, i) => i !== index)
+  _setFilters(updated)
+  saveFilters()
+}
+
+export function testFilter(text: string): { action: "exclude" | "include"; matchedRule: number } {
+  const rules = filters.peek()
+  for (let i = 0; i < rules.length; i++) {
+    try {
+      if (new RegExp(rules[i].pattern, "i").test(text)) {
+        return { action: rules[i].action, matchedRule: i }
+      }
+    } catch { /* skip invalid regex */ }
+  }
+  return { action: "include", matchedRule: -1 }
+}
+
+function getFilterTarget(rule: FilterRule, n: Notifd.Notification): string {
+  switch (rule.field) {
+    case "app": return n.appName || ""
+    case "summary": return n.summary || ""
+    case "body": return n.body || ""
+    case "all": return `${n.appName || ""}: ${n.summary || ""} ${n.body || ""}`
+  }
+}
+
+export function shouldAllowNotification(n: Notifd.Notification): boolean {
+  const rules = filters.peek()
+  for (let i = 0; i < rules.length; i++) {
+    try {
+      const text = getFilterTarget(rules[i], n)
+      if (new RegExp(rules[i].pattern, "i").test(text)) {
+        return rules[i].action === "include"
+      }
+    } catch { /* skip invalid regex */ }
+  }
+  return true
+}
+
 // ── Notification history ──────────────────────────
 
 export interface HistoryEntry {
@@ -83,7 +161,9 @@ const [history, setHistory] = createState<HistoryEntry[]>([])
 
 export { history }
 
-export function recordNotification(n: Notifd.Notification): void {
+export function recordNotification(n: Notifd.Notification): boolean {
+  if (!shouldAllowNotification(n)) return false
+
   const actions: { id: string; label: string }[] = []
   const nActions = n.get_actions()
   if (nActions) {
@@ -106,6 +186,7 @@ export function recordNotification(n: Notifd.Notification): void {
 
   const updated = [entry, ...history.peek()]
   setHistory(updated.length > 200 ? updated.slice(0, 200) : updated)
+  return true
 }
 
 export function dismissNotification(id: number): void {

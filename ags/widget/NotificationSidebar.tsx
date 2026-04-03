@@ -9,6 +9,7 @@ import {
   dnd,
   toggleDnd,
   focusDismiss,
+  filters,
   history,
   dismissNotification,
   clearHistory,
@@ -135,6 +136,11 @@ export default function NotificationSidebar(gdkmonitor: Gdk.Monitor) {
     d ? ["dnd-toggle", "active"] : ["dnd-toggle"]
   )
 
+  const filterLabel = filters.as((f) => f.length > 0 ? `󰈶 ${f.length}` : "󰈶")
+  const filterClasses = filters.as((f) =>
+    f.length > 0 ? ["filter-indicator", "active"] : ["filter-indicator"]
+  )
+
   // transparent scrim — click to close sidebar
   const scrim = (
     <window
@@ -175,6 +181,9 @@ export default function NotificationSidebar(gdkmonitor: Gdk.Monitor) {
         <box cssClasses={["sidebar-header"]}>
           <label label="Notifications" cssClasses={["sidebar-title"]} />
           <box hexpand halign={Gtk.Align.END}>
+            <button cssClasses={filterClasses} cursor={pointer}>
+              <label label={filterLabel} />
+            </button>
             <button cssClasses={dndClasses} cursor={pointer} onClicked={() => toggleDnd()}>
               <label label={dndIcon} />
             </button>

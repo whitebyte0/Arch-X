@@ -8,14 +8,14 @@ window.notification-bar.urgency-critical {
 }
 
 .bar-content {
-    min-height: 30px;
+    min-height: 34px;
     padding: 0 14px;
 }
 
 .notification-button {
     background: transparent;
     border: none;
-    min-height: 30px;
+    min-height: 34px;
 }
 
 .notification-button:hover {
@@ -24,15 +24,16 @@ window.notification-bar.urgency-critical {
 
 .summary {
     font-family: "JetBrainsMono Nerd Font", monospace;
-    font-size: 11px;
+    font-size: 13px;
     font-weight: bold;
     color: #e0e0e0;
 }
 
 .body {
     font-family: "JetBrainsMono Nerd Font", monospace;
-    font-size: 11px;
-    color: #808080;
+    font-size: 12px;
+    font-weight: 500;
+    color: #a0a0a0;
 }
 
 window.urgency-low .summary {
@@ -132,7 +133,8 @@ window.notification-sidebar {
 }
 
 .dnd-toggle,
-.clear-all {
+.clear-all,
+.filter-indicator {
     background: rgba(255, 255, 255, 0.05);
     border: none;
     border-radius: 4px;
@@ -144,13 +146,18 @@ window.notification-sidebar {
 }
 
 .dnd-toggle:hover,
-.clear-all:hover {
+.clear-all:hover,
+.filter-indicator:hover {
     background: rgba(255, 255, 255, 0.1);
     color: #e0e0e0;
 }
 
 .dnd-toggle.active {
     color: #f9e2af;
+}
+
+.filter-indicator.active {
+    color: #a6e3a1;
 }
 
 .sidebar-list {

@@ -3,7 +3,7 @@ import { Astal, Gtk, Gdk } from "ags/gtk4"
 import { createState, createComputed } from "ags"
 import GLib from "gi://GLib"
 import Notifd from "gi://AstalNotifd?version=0.1"
-import { notifd, mode, dnd, recordNotification } from "../lib/notifications"
+import { notifd, mode, dnd, shouldAllowNotification } from "../lib/notifications"
 
 const TIMEOUT_LOW = 8000
 const TIMEOUT_NORMAL = 12000
@@ -86,8 +86,7 @@ export default function NotificationBar(gdkmonitor: Gdk.Monitor) {
   notifd.connect("notified", (_self: Notifd.Notifd, id: number) => {
     const n = notifd.get_notification(id)
     if (!n) return
-    recordNotification(n)
-    if (!dnd.peek()) show(n)
+    if (shouldAllowNotification(n) && !dnd.peek()) show(n)
   })
 
   notifd.connect("resolved", () => {

@@ -3,7 +3,7 @@ import style from "./style.css"
 import NotificationBar, { dismissAll } from "./widget/NotificationBar"
 import NotificationSidebar, { toggleSidebar } from "./widget/NotificationSidebar"
 import InfoPanel, { showInfo, hideInfo } from "./widget/InfoPanel"
-import { setMode, setDnd, toggleDnd, dnd, history, clearHistory, focusDismiss, setFocusDismiss, toggleFocusDismiss } from "./lib/notifications"
+import { notifd, setMode, setDnd, toggleDnd, dnd, history, clearHistory, focusDismiss, setFocusDismiss, toggleFocusDismiss, filters, addFilter, removeFilter, testFilter, recordNotification, type FilterField } from "./lib/notifications"
 
 app.start({
   css: style,
@@ -74,11 +74,77 @@ app.start({
         }))
         break
 
+      case "filter": {
+        const sub = args[1]
+        const validFields = ["app", "summary", "body", "all"]
+
+        if (sub === "list") {
+          const rules = filters.peek()
+          if (rules.length === 0) {
+            res("No filter rules configured")
+          } else {
+            const lines = rules.map((r, i) => `${i}: [${r.action}] --${r.field} ${r.pattern}`)
+            res(lines.join("\n"))
+          }
+          break
+        }
+
+        if (sub === "add") {
+          const field = args[2]
+          const action = args[3]
+          const pattern = args.slice(4).join(" ")
+          if (!validFields.includes(field) || (action !== "exclude" && action !== "include") || !pattern) {
+            res("usage: filter add <app|summary|body|all> <exclude|include> <regex>")
+            break
+          }
+          try {
+            addFilter(field as FilterField, action, pattern)
+            res(`Added ${action} rule: --${field} ${pattern}`)
+          } catch (e: any) {
+            res(`Error: ${e.message}`)
+          }
+          break
+        }
+
+        if (sub === "rm") {
+          const idx = parseInt(args[2], 10)
+          if (isNaN(idx)) { res("usage: filter rm <index>"); break }
+          try {
+            removeFilter(idx)
+            res(`Removed rule ${idx}`)
+          } catch (e: any) {
+            res(`Error: ${e.message}`)
+          }
+          break
+        }
+
+        if (sub === "test") {
+          const text = args.slice(2).join(" ")
+          if (!text) { res("usage: filter test <text>"); break }
+          const result = testFilter(text)
+          if (result.matchedRule === -1) {
+            res("ALLOW (no rule matched)")
+          } else {
+            res(`${result.action.toUpperCase()} (rule ${result.matchedRule})`)
+          }
+          break
+        }
+
+        res("usage: filter list|add|rm|test")
+        break
+      }
+
       default:
         res("unknown request")
     }
   },
   main() {
+    // Record notifications once globally (not per-monitor)
+    notifd.connect("notified", (_self: any, id: number) => {
+      const n = notifd.get_notification(id)
+      if (n) recordNotification(n)
+    })
+
     const monitors = app.get_monitors()
     monitors.map(NotificationBar)
     if (monitors.length > 0) {

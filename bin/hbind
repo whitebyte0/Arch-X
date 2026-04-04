@@ -271,9 +271,6 @@ cmd_edit() {
     local file
     file=$(find_bind_file "$mods" "$key") || die "$norm_mods + $norm_key not found"
 
-    # Detect original bind type
-    local orig_type="bind"
-
     # Use $mod in config if applicable
     local config_mods="$mods"
     config_mods=$(echo "$config_mods" | sed "s/$mod_val/\$mod/gi")
@@ -281,9 +278,9 @@ cmd_edit() {
     # Build new line
     local new_line
     if [ -n "$args" ]; then
-        new_line="$orig_type = $config_mods, $key, $dispatcher, $args"
+        new_line="bind = $config_mods, $key, $dispatcher, $args"
     else
-        new_line="$orig_type = $config_mods, $key, $dispatcher"
+        new_line="bind = $config_mods, $key, $dispatcher"
     fi
 
     # Replace in config

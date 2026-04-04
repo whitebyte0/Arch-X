@@ -1,12 +1,13 @@
 #!/bin/bash
 #
-# setup-deploy-server — Provision a fresh Ubuntu 22 VPS for deployment
+# setup-deploy-server — Provision a fresh server for deployment
 #
 # Creates a least-privileged 'deploy' user with SSH key auth,
-# installs Docker, hardens SSH, and sets up the deploy directory.
+# installs Docker (Linux) or skips it (FreeBSD), hardens SSH,
+# and sets up the deploy directory.
 # Auto-rolls back on failure.
 #
-# Tested on: Ubuntu 22.04 LTS (Contabo VPS)
+# Supported: Ubuntu 22.04 LTS, FreeBSD 13+
 #
 
 # ── Strict mode (no set -e; we handle errors manually) ──
@@ -29,6 +30,7 @@ step() { echo -e "\n${CYAN}[$1]${NC} $2"; }
 # ── Rollback tracking ───────────────────────────────────
 COMPLETED_STEPS=()
 ROLLBACK_NEEDED=false
+REMOTE_OS=""
 
 rollback() {
     ROLLBACK_NEEDED=true
@@ -39,7 +41,11 @@ rollback() {
         case "${COMPLETED_STEPS[$i]}" in
             deploy-user)
                 echo -e "  ${DIM}Rolling back: deploy user${NC}"
-                ssh "${HOST}-root" 'userdel -r deploy 2>/dev/null; rm -f /etc/sudoers.d/deploy' 2>/dev/null
+                if [[ "$REMOTE_OS" == "FreeBSD" ]]; then
+                    ssh "${HOST}-root" 'pw userdel deploy -r 2>/dev/null; rm -f /usr/local/etc/doas.conf' 2>/dev/null
+                else
+                    ssh "${HOST}-root" 'userdel -r deploy 2>/dev/null; rm -f /etc/sudoers.d/deploy' 2>/dev/null
+                fi
                 ;;
             deploy-key-local)
                 echo -e "  ${DIM}Rolling back: local deploy key${NC}"
@@ -53,7 +59,11 @@ rollback() {
                 ;;
             sshd-hardened)
                 echo -e "  ${DIM}Rolling back: sshd config${NC}"
-                ssh "${HOST}-root" '[ -f /etc/ssh/sshd_config.bak ] && cp /etc/ssh/sshd_config.bak /etc/ssh/sshd_config && systemctl restart sshd' 2>/dev/null
+                if [[ "$REMOTE_OS" == "FreeBSD" ]]; then
+                    ssh "${HOST}-root" '[ -f /etc/ssh/sshd_config.bak ] && cp /etc/ssh/sshd_config.bak /etc/ssh/sshd_config && service sshd restart' 2>/dev/null
+                else
+                    ssh "${HOST}-root" '[ -f /etc/ssh/sshd_config.bak ] && cp /etc/ssh/sshd_config.bak /etc/ssh/sshd_config && systemctl restart sshd' 2>/dev/null
+                fi
                 ;;
         esac
     done
@@ -66,18 +76,21 @@ trap 'if [ "$ROLLBACK_NEEDED" = false ]; then rollback; fi' ERR
 
 # ── Usage ────────────────────────────────────────────────
 usage() {
-    echo -e "${CYAN}setup-deploy-server${NC} — Provision Ubuntu 22 VPS for deployment"
+    echo -e "${CYAN}setup-deploy-server${NC} — Provision a server for deployment"
     echo ""
     echo -e "  Usage: setup-deploy-server <host> [port]"
     echo ""
     echo "  host  — IP or domain of the server"
     echo "  port  — SSH port (default: 22)"
     echo ""
+    echo "  Supported: Ubuntu 22.04, FreeBSD 13+"
+    echo "  OS is auto-detected on the remote host."
+    echo ""
     echo "  Steps performed:"
     echo "    1. Setup root SSH key"
-    echo "    2. Create 'deploy' user (locked down, docker-only sudo)"
+    echo "    2. Create 'deploy' user (locked down)"
     echo "    3. Deploy SSH key for deploy user"
-    echo "    4. Install Docker"
+    echo "    4. Install Docker (Linux) or skip (FreeBSD)"
     echo "    5. Finalize (deploy dir, SSH hardening, banner)"
     echo ""
     echo -e "  ${CYAN}Example:${NC} setup-deploy-server 203.0.113.10"
@@ -108,7 +121,7 @@ KEYFILE="$HOME/.ssh/${HOST}-deploy"
 
 echo -e "${GREEN}"
 echo "  ╔═══════════════════════════════════════╗"
-echo "  ║   Deploy Server Setup — Ubuntu 22     ║"
+echo "  ║   Deploy Server Setup                 ║"
 echo "  ╚═══════════════════════════════════════╝"
 echo -e "${NC}"
 
@@ -122,35 +135,73 @@ else
     ok "Root SSH key deployed"
 fi
 
+# ── OS detection ─────────────────────────────────────────
+REMOTE_OS=$(ssh "${HOST}-root" 'uname -s')
+
+case "$REMOTE_OS" in
+    Linux)   ok "Detected OS: Linux" ;;
+    FreeBSD) ok "Detected OS: FreeBSD" ;;
+    *)
+        err "Unsupported OS: $REMOTE_OS"
+        exit 1
+        ;;
+esac
+
 # ── Step 2: Create deploy user ───────────────────────────
 step "2/5" "Deploy user"
 
-USER_EXISTS=$(ssh "${HOST}-root" 'id deploy &>/dev/null && echo yes || echo no')
+USER_EXISTS=$(ssh "${HOST}-root" 'id deploy >/dev/null 2>&1 && echo yes || echo no')
 
 if [[ "$USER_EXISTS" == "yes" ]]; then
     skip "User 'deploy' already exists"
 else
-    ssh "${HOST}-root" << 'REMOTE'
+    if [[ "$REMOTE_OS" == "FreeBSD" ]]; then
+        ssh "${HOST}-root" << 'REMOTE'
+set -e
+pkg install -y bash doas
+pw useradd deploy -m -s /usr/local/bin/bash
+pw unlock deploy 2>/dev/null || true
+REMOTE
+    else
+        ssh "${HOST}-root" << 'REMOTE'
 set -e
 useradd -m -s /bin/bash deploy
 passwd -u deploy 2>/dev/null || usermod -p '*' deploy
+REMOTE
+    fi
+    ok "User 'deploy' created and unlocked"
+fi
+
+# Ensure .ssh directory exists (even if user already existed)
+ssh "${HOST}-root" << 'REMOTE'
+set -e
 mkdir -p /home/deploy/.ssh
 chmod 700 /home/deploy/.ssh
 touch /home/deploy/.ssh/authorized_keys
 chmod 600 /home/deploy/.ssh/authorized_keys
-chown -R deploy:deploy /home/deploy/.ssh
+chown -R deploy:$(id -gn deploy) /home/deploy/.ssh
 REMOTE
-    ok "User 'deploy' created and unlocked"
-fi
+ok "SSH directory ensured"
 
-# Sudoers (always ensure correct)
-ssh "${HOST}-root" << 'REMOTE'
+# Privilege escalation config
+if [[ "$REMOTE_OS" == "FreeBSD" ]]; then
+    ssh "${HOST}-root" << 'REMOTE'
+cat > /usr/local/etc/doas.conf << 'DOAS'
+permit nopass deploy as root cmd service
+permit nopass deploy as root cmd pkg
+DOAS
+chmod 600 /usr/local/etc/doas.conf
+REMOTE
+    ok "doas configured (service + pkg only)"
+else
+    ssh "${HOST}-root" << 'REMOTE'
 cat > /etc/sudoers.d/deploy << 'SUDOERS'
 deploy ALL=(ALL) NOPASSWD: /usr/bin/docker, /usr/bin/docker-compose, /usr/local/bin/docker-compose, /usr/libexec/docker/cli-plugins/docker-compose
 SUDOERS
 chmod 440 /etc/sudoers.d/deploy
 REMOTE
-ok "Sudoers configured (docker only)"
+    ok "Sudoers configured (docker only)"
+fi
 
 COMPLETED_STEPS+=(deploy-user)
 
@@ -178,7 +229,7 @@ set -e
 cat /tmp/deploy_key.pub >> /home/deploy/.ssh/authorized_keys
 sort -u -o /home/deploy/.ssh/authorized_keys /home/deploy/.ssh/authorized_keys
 chmod 600 /home/deploy/.ssh/authorized_keys
-chown deploy:deploy /home/deploy/.ssh/authorized_keys
+chown deploy:$(id -gn deploy) /home/deploy/.ssh/authorized_keys
 rm -f /tmp/deploy_key.pub
 REMOTE
 COMPLETED_STEPS+=(deploy-key-remote)
@@ -191,8 +242,9 @@ if ! grep -q "^Host ${HOST}-deploy$" ~/.ssh/config 2>/dev/null; then
     ok "Added '${HOST}-deploy' to ~/.ssh/config"
 fi
 
-# Fix Ubuntu 22 sshd_config.d overrides that block key auth
-ssh "${HOST}-root" << 'REMOTE'
+# Fix Ubuntu 22 sshd_config.d overrides that block key auth (Linux only)
+if [[ "$REMOTE_OS" == "Linux" ]]; then
+    ssh "${HOST}-root" << 'REMOTE'
 for f in /etc/ssh/sshd_config.d/*.conf; do
     [ -f "$f" ] || continue
     sed -i '/^PasswordAuthentication/d' "$f"
@@ -200,6 +252,7 @@ for f in /etc/ssh/sshd_config.d/*.conf; do
 done
 systemctl restart sshd
 REMOTE
+fi
 
 # Verify with retry
 VERIFIED=false
@@ -219,15 +272,18 @@ else
     rollback
 fi
 
-# ── Step 4: Install Docker ───────────────────────────────
+# ── Step 4: Docker (Linux only) ─────────────────────────
 step "4/5" "Docker"
 
-DOCKER_EXISTS=$(ssh "${HOST}-root" 'command -v docker &>/dev/null && echo yes || echo no')
-
-if [[ "$DOCKER_EXISTS" == "yes" ]]; then
-    skip "Docker already installed"
+if [[ "$REMOTE_OS" == "FreeBSD" ]]; then
+    skip "Docker not available on FreeBSD"
 else
-    ssh "${HOST}-root" << 'REMOTE'
+    DOCKER_EXISTS=$(ssh "${HOST}-root" 'command -v docker &>/dev/null && echo yes || echo no')
+
+    if [[ "$DOCKER_EXISTS" == "yes" ]]; then
+        skip "Docker already installed"
+    else
+        ssh "${HOST}-root" << 'REMOTE'
 set -e
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -o DPkg::Lock::Timeout=120 -qq
@@ -239,15 +295,16 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.
 apt-get update -o DPkg::Lock::Timeout=120 -qq
 apt-get install -y -o DPkg::Lock::Timeout=120 -qq docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 REMOTE
-    ok "Docker installed"
-fi
+        ok "Docker installed"
+    fi
 
-ssh "${HOST}-root" << 'REMOTE'
+    ssh "${HOST}-root" << 'REMOTE'
 usermod -aG docker deploy 2>/dev/null || true
 systemctl enable docker 2>/dev/null
 systemctl start docker 2>/dev/null
 REMOTE
-ok "Deploy user added to docker group"
+    ok "Deploy user added to docker group"
+fi
 
 # ── Step 5: Finalize ─────────────────────────────────────
 step "5/5" "Finalize"
@@ -256,13 +313,33 @@ step "5/5" "Finalize"
 ssh "${HOST}-root" << 'REMOTE'
 set -e
 mkdir -p /opt/deploy
-chown deploy:deploy /opt/deploy
+chown deploy:$(id -gn deploy) /opt/deploy
 chmod 750 /opt/deploy
 REMOTE
 ok "Deploy directory /opt/deploy created"
 
-# Harden SSH (single consolidated step)
-ssh "${HOST}-root" << 'REMOTE'
+# Harden SSH
+if [[ "$REMOTE_OS" == "FreeBSD" ]]; then
+    ssh "${HOST}-root" << 'REMOTE'
+set -e
+SSHD="/etc/ssh/sshd_config"
+cp "$SSHD" "${SSHD}.bak"
+
+sed -i '' 's/^#*PasswordAuthentication.*/PasswordAuthentication no/' "$SSHD"
+sed -i '' 's/^#*ChallengeResponseAuthentication.*/ChallengeResponseAuthentication no/' "$SSHD"
+sed -i '' 's/^#*KbdInteractiveAuthentication.*/KbdInteractiveAuthentication no/' "$SSHD"
+sed -i '' 's/^#*UsePAM.*/UsePAM no/' "$SSHD"
+sed -i '' 's/^#*PubkeyAuthentication.*/PubkeyAuthentication yes/' "$SSHD"
+sed -i '' 's/^#*PermitRootLogin.*/PermitRootLogin prohibit-password/' "$SSHD"
+
+grep -q "^PasswordAuthentication" "$SSHD" || echo "PasswordAuthentication no" >> "$SSHD"
+grep -q "^PubkeyAuthentication" "$SSHD"   || echo "PubkeyAuthentication yes" >> "$SSHD"
+grep -q "^PermitRootLogin" "$SSHD"        || echo "PermitRootLogin prohibit-password" >> "$SSHD"
+
+service sshd restart
+REMOTE
+else
+    ssh "${HOST}-root" << 'REMOTE'
 set -e
 SSHD="/etc/ssh/sshd_config"
 cp "$SSHD" "${SSHD}.bak"
@@ -280,11 +357,12 @@ grep -q "^PermitRootLogin" "$SSHD"        || echo "PermitRootLogin prohibit-pass
 
 systemctl restart sshd
 REMOTE
+fi
 COMPLETED_STEPS+=(sshd-hardened)
 ok "SSH hardened (key-only, password disabled)"
 
 # Banner
-ssh "${HOST}-root" "printf '\n  ┌──────────────────────────────┐\n  │  %-28s│\n  │  Production Server           │\n  └──────────────────────────────┘\n\n' '${HOST}' > /etc/motd"
+ssh "${HOST}-root" "printf '\n  ┌──────────────────────────────┐\n  │  %-28s│\n  │  Production Server %-9s │\n  └──────────────────────────────┘\n\n' '${HOST}' '${REMOTE_OS}' > /etc/motd"
 ok "Server banner set"
 
 # Verify root still works after hardening
@@ -299,15 +377,21 @@ ROLLBACK_NEEDED=true  # Prevent trap from rolling back on clean exit
 
 echo ""
 echo -e "${GREEN}  ╔═══════════════════════════════════════╗"
-echo -e "  ║   Setup Complete                      ║"
+echo -e "  ║   Setup Complete — $(printf '%-18s' "$REMOTE_OS")║"
 echo -e "  ╚═══════════════════════════════════════╝${NC}"
 echo ""
 echo -e "  ${CYAN}Root:${NC}      ssh ${HOST}-root"
 echo -e "  ${CYAN}Deploy:${NC}    ssh ${HOST}-deploy"
 echo -e "  ${CYAN}Directory:${NC} ${DEPLOY_DIR}"
 echo ""
-echo -e "  ${DIM}SSH: key-only | Root: prohibit-password | Deploy: docker sudo only${NC}"
+if [[ "$REMOTE_OS" == "FreeBSD" ]]; then
+    echo -e "  ${DIM}SSH: key-only | Root: prohibit-password | Deploy: doas (service, pkg)${NC}"
+else
+    echo -e "  ${DIM}SSH: key-only | Root: prohibit-password | Deploy: docker sudo only${NC}"
+fi
 echo ""
 echo -e "  ${CYAN}Next steps:${NC}"
 echo -e "    scp .env.production ${HOST}-deploy:${DEPLOY_DIR}/.env"
-echo -e "    base64 -w 0 ~/.ssh/${HOST}-deploy | wl-copy  ${DIM}# for GitLab CI${NC}"
+if [[ "$REMOTE_OS" == "Linux" ]]; then
+    echo -e "    base64 -w 0 ~/.ssh/${HOST}-deploy | wl-copy  ${DIM}# for GitLab CI${NC}"
+fi

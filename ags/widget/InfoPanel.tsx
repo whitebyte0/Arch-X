@@ -36,12 +36,6 @@ export function hideInfo() {
   setVisible(false)
 }
 
-export function toggleInfo() {
-  if (visible.peek()) {
-    hideInfo()
-  }
-}
-
 export default function InfoPanel(gdkmonitor: Gdk.Monitor) {
   const { TOP, LEFT, RIGHT, BOTTOM } = Astal.WindowAnchor
 

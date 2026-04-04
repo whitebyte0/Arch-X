@@ -7,7 +7,7 @@ Minimal Arch Linux + Hyprland development environment. One script to go from a f
 **Desktop**
 - Hyprland (tiling Wayland compositor)
 - Waybar (status bar with CPU, memory, network, bluetooth, battery, keyboard layout)
-- AGS notification center (bottom bar + sidebar history, DND, action buttons)
+- AGS notification center (waybar inline + sidebar history, action buttons)
 - Wofi (app launcher)
 - Wlogout (power menu)
 - Hyprlock + Hypridle (lock screen + auto-lock/suspend + screen dim)
@@ -57,7 +57,7 @@ Minimal Arch Linux + Hyprland development environment. One script to go from a f
 - glab (GitLab CLI), gh (GitHub CLI)
 - Git aliases (gs, ga, gc, gd, gl, gp, gpl)
 - Clipboard history (Super+V)
-- `notif` — notification control (mode, DND, focus-dismiss, history)
+- `notif` — notification control (focus-dismiss, filters, history)
 - `doctor` — diagnostic health check (SDDM, GPU, symlinks, services, packages)
 - `hbind` — Hyprland keybinding manager (list, add, remove, edit)
 - `toggle-scratchpad` — dropdown scratchpad terminal
@@ -182,7 +182,7 @@ Reports pass/fail for: display manager, Hyprland session, GPU drivers, config sy
 | Super+V | Clipboard history |
 | Super+Shift+V | Delete clipboard entry |
 | Super+B | Bluetooth manager |
-| Super+N | Notification sidebar (history, actions, DND) |
+| Super+N | Notification sidebar (history, actions) |
 | Super+Shift+N | Dismiss current notification |
 | Super+Arrows | Move focus |
 | Super+Shift+Arrows | Move window |

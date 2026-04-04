@@ -6,7 +6,7 @@
     "spacing": 4,
 
     "modules-left": ["hyprland/workspaces", "tray", "hyprland/taskbar"],
-    "modules-center": ["clock"],
+    "modules-center": ["custom/center"],
     "modules-right": ["custom/recording", "hyprland/language", "cpu", "memory", "temperature", "custom/battery", "bluetooth", "network", "pulseaudio", "custom/power"],
 
     "tray": {
@@ -73,15 +73,12 @@
         "interval": 5
     },
 
-    "clock": {
-        "format": "󰥔 {:%H:%M}",
-        "format-alt": "󰃭 {:%A, %d %B %Y  %H:%M}",
-        "tooltip-format": "<tt>{calendar}</tt>",
-        "calendar": {
-            "format": {
-                "today": "<b><u>{}</u></b>"
-            }
-        }
+    "custom/center": {
+        "exec": "~/.config/waybar/scripts/center-module.sh",
+        "return-type": "json",
+        "interval": 30,
+        "signal": 8,
+        "on-click": "ags request dismiss-all"
     },
 
     "custom/power": {

@@ -6,8 +6,6 @@ import GLib from "gi://GLib"
 const pointer = new Gdk.Cursor({ name: "pointer" })
 import {
   notifd,
-  dnd,
-  toggleDnd,
   focusDismiss,
   filters,
   history,
@@ -131,11 +129,6 @@ export default function NotificationSidebar(gdkmonitor: Gdk.Monitor) {
     return len === 0 ? "No notifications" : `${len} notification${len === 1 ? "" : "s"}`
   })
 
-  const dndIcon = dnd.as((d) => d ? "󰂛" : "󰂚")
-  const dndClasses = dnd.as((d) =>
-    d ? ["dnd-toggle", "active"] : ["dnd-toggle"]
-  )
-
   const filterLabel = filters.as((f) => f.length > 0 ? `󰈶 ${f.length}` : "󰈶")
   const filterClasses = filters.as((f) =>
     f.length > 0 ? ["filter-indicator", "active"] : ["filter-indicator"]
@@ -183,9 +176,6 @@ export default function NotificationSidebar(gdkmonitor: Gdk.Monitor) {
           <box hexpand halign={Gtk.Align.END}>
             <button cssClasses={filterClasses} cursor={pointer}>
               <label label={filterLabel} />
-            </button>
-            <button cssClasses={dndClasses} cursor={pointer} onClicked={() => toggleDnd()}>
-              <label label={dndIcon} />
             </button>
             <button cssClasses={["clear-all"]} cursor={pointer} onClicked={() => clearHistory()}>
               <label label="󰩺" />

@@ -1,13 +1,9 @@
 #!/bin/bash
 #
-# Arch-X — Notification mode & DND control
+# Arch-X — Notification & DND control
 #
 # Usage:
-#   notif status              Show current mode, DND, notification count
-#   notif reserved            Always reserve space for notifications
-#   notif dynamic             Move windows when notification appears (default)
-#   notif overlay             Show notifications over windows
-#   notif dnd on|off|toggle   Do Not Disturb control
+#   notif status              Show notification count
 #   notif focus-dismiss on|off  Close sidebar on click outside (default: off)
 #   notif clear               Clear notification history
 #   notif filter list                                  List filter rules
@@ -16,52 +12,17 @@
 #   notif filter test <text>                           Test text against rules
 #
 
-MODE_FILE="$HOME/.config/arch-x/notification-mode"
-
-get_mode() {
-    if [ -f "$MODE_FILE" ]; then
-        cat "$MODE_FILE"
-    else
-        echo "dynamic"
-    fi
-}
-
-set_mode() {
-    echo "$1" > "$MODE_FILE"
-    ags request "mode:$1" 2>/dev/null || true
-    echo "Notification mode: $1"
-}
-
 case "${1:-status}" in
     status)
-        echo "Mode: $(get_mode)"
         status=$(ags request status 2>/dev/null)
         if [ -n "$status" ]; then
-            dnd=$(echo "$status" | jq -r '.dnd // false')
             fd=$(echo "$status" | jq -r '.focusDismiss // false')
             count=$(echo "$status" | jq -r '.count // 0')
-            echo "DND: $dnd"
             echo "Focus-dismiss: $fd"
             echo "History: $count notification(s)"
         else
             echo "AGS not running"
         fi
-        ;;
-    reserved|dynamic|overlay)
-        set_mode "$1"
-        ;;
-    dnd)
-        sub="${2:-toggle}"
-        case "$sub" in
-            on|off|toggle)
-                result=$(ags request dnd "$sub" 2>/dev/null)
-                echo "${result:-AGS not running}"
-                ;;
-            *)
-                echo "Usage: notif dnd {on|off|toggle}"
-                exit 1
-                ;;
-        esac
         ;;
     focus-dismiss)
         sub="${2:-toggle}"
@@ -135,7 +96,7 @@ case "${1:-status}" in
         esac
         ;;
     *)
-        echo "Usage: notif {status|reserved|dynamic|overlay|dnd|focus-dismiss|clear|filter}"
+        echo "Usage: notif {status|focus-dismiss|clear|filter}"
         exit 1
         ;;
 esac

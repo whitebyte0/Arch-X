@@ -6,16 +6,15 @@ import GLib from "gi://GLib"
 const STATE_DIR = GLib.get_home_dir() + "/.config/arch-x"
 GLib.mkdir_with_parents(STATE_DIR, 0o755)
 
-const MODE_FILE = STATE_DIR + "/notification-mode"
-const DND_FILE = STATE_DIR + "/notification-dnd"
 const FOCUS_DISMISS_FILE = STATE_DIR + "/notification-focus-dismiss"
 const FILTERS_FILE = STATE_DIR + "/notification-filters.json"
+const CURRENT_NOTIF_FILE = STATE_DIR + "/notification-current.json"
 
 // ── Notifd singleton ──────────────────────────────
 
 export const notifd = Notifd.get_default()
 
-// ── Notification mode ─────────────────────────────
+// ── Helpers ──────────────────────────────────────
 
 function readFile_(path: string, fallback: string): string {
   try {
@@ -24,33 +23,6 @@ function readFile_(path: string, fallback: string): string {
   } catch {
     return fallback
   }
-}
-
-const [mode, _setMode] = createState(readFile_(MODE_FILE, "overlay"))
-
-export { mode }
-
-export function setMode(m: string) {
-  if (["reserved", "dynamic", "overlay"].includes(m)) {
-    _setMode(m)
-    writeFile(MODE_FILE, m)
-  }
-}
-
-// ── Do Not Disturb ────────────────────────────────
-
-const [dnd, _setDnd] = createState(readFile_(DND_FILE, "off") === "on")
-
-export { dnd }
-
-export function setDnd(value: boolean) {
-  _setDnd(value)
-  writeFile(DND_FILE, value ? "on" : "off")
-  notifd.dontDisturb = value
-}
-
-export function toggleDnd() {
-  setDnd(!dnd.peek())
 }
 
 // ── Click-outside-to-close ────────────────────────
@@ -97,7 +69,7 @@ const [filters, _setFilters] = createState<FilterRule[]>(loadFilters())
 export { filters }
 
 export function addFilter(field: FilterField, action: "exclude" | "include", pattern: string): void {
-  new RegExp(pattern) // validate — throws if invalid
+  new RegExp(pattern) // validate - throws if invalid
   const updated = [...filters.peek(), { field, pattern, action }]
   _setFilters(updated)
   saveFilters()
@@ -143,6 +115,28 @@ export function shouldAllowNotification(n: Notifd.Notification): boolean {
     } catch { /* skip invalid regex */ }
   }
   return true
+}
+
+// ── Waybar bridge ────────────────────────────────
+
+function signalWaybar(): void {
+  GLib.spawn_command_line_async("pkill -RTMIN+8 waybar")
+}
+
+export function setCurrentNotification(n: Notifd.Notification): void {
+  const data = {
+    summary: n.summary || "",
+    body: (n.body || "").replace(/<[^>]*>/g, "").replace(/\n/g, " "),
+    urgency: n.urgency === Notifd.Urgency.CRITICAL ? "critical" : n.urgency === Notifd.Urgency.LOW ? "low" : "normal",
+    appName: n.appName || "",
+  }
+  writeFile(CURRENT_NOTIF_FILE, JSON.stringify(data))
+  signalWaybar()
+}
+
+export function clearCurrentNotification(): void {
+  writeFile(CURRENT_NOTIF_FILE, "{}")
+  signalWaybar()
 }
 
 // ── Notification history ──────────────────────────

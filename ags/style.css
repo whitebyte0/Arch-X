@@ -1,57 +1,3 @@
-window.notification-bar {
-    background: rgba(0, 0, 0, 0.75);
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-window.notification-bar.urgency-critical {
-    border-top: 1px solid #f38ba8;
-}
-
-.bar-content {
-    min-height: 34px;
-    padding: 0 14px;
-}
-
-.notification-button {
-    background: transparent;
-    border: none;
-    min-height: 34px;
-}
-
-.notification-button:hover {
-    background: rgba(255, 255, 255, 0.03);
-}
-
-.summary {
-    font-family: "JetBrainsMono Nerd Font", monospace;
-    font-size: 13px;
-    font-weight: bold;
-    color: #e0e0e0;
-}
-
-.body {
-    font-family: "JetBrainsMono Nerd Font", monospace;
-    font-size: 12px;
-    font-weight: 500;
-    color: #a0a0a0;
-}
-
-window.urgency-low .summary {
-    color: #808080;
-}
-
-window.urgency-low .body {
-    color: #6c7086;
-}
-
-window.urgency-critical .summary {
-    color: #f38ba8;
-}
-
-window.urgency-critical .body {
-    color: #e0e0e0;
-}
-
 /* ── Info Panel ────────────────────────────────── */
 
 window.info-scrim {
@@ -132,7 +78,6 @@ window.notification-sidebar {
     color: #e0e0e0;
 }
 
-.dnd-toggle,
 .clear-all,
 .filter-indicator {
     background: rgba(255, 255, 255, 0.05);
@@ -145,15 +90,10 @@ window.notification-sidebar {
     margin-left: 8px;
 }
 
-.dnd-toggle:hover,
 .clear-all:hover,
 .filter-indicator:hover {
     background: rgba(255, 255, 255, 0.1);
     color: #e0e0e0;
-}
-
-.dnd-toggle.active {
-    color: #f9e2af;
 }
 
 .filter-indicator.active {

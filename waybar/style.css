@@ -43,12 +43,42 @@ window#waybar {
     background: rgba(243, 139, 168, 0.12);
 }
 
-/* ── Clock ─────────────────────────────────────── */
+/* ── Center module (clock + notifications) ──────── */
 
-#clock {
-    color: #e0e0e0;
+#custom-center {
     font-weight: bold;
     letter-spacing: 1px;
+}
+
+#custom-center.clock {
+    color: #e0e0e0;
+}
+
+#custom-center.notif-normal {
+    color: #e0e0e0;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0 10px;
+    margin: 4px 2px;
+    border-radius: 4px;
+    letter-spacing: 0;
+}
+
+#custom-center.notif-critical {
+    color: #f38ba8;
+    background: rgba(243, 139, 168, 0.1);
+    padding: 0 10px;
+    margin: 4px 2px;
+    border-radius: 4px;
+    letter-spacing: 0;
+}
+
+#custom-center.notif-low {
+    color: #808080;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0 10px;
+    margin: 4px 2px;
+    border-radius: 4px;
+    letter-spacing: 0;
 }
 
 /* ── Shared module style ───────────────────────── */

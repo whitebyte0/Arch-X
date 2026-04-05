@@ -1,6 +1,5 @@
 # Hyprland + desktop
 hyprland
-waybar
 gjs
 wofi
 hyprlock

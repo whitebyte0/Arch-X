@@ -1,5 +1,5 @@
 #!/bin/bash
-# lib.sh — shared helpers for waybar info popups
+# lib.sh — shared helpers info popups
 
 GREEN='#ffffff'
 YELLOW='#f9e2af'

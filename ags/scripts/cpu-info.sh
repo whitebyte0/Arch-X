@@ -1,5 +1,5 @@
 #!/bin/bash
-# cpu-info.sh — CPU info popup for waybar
+# cpu-info.sh — CPU info popup
 
 source "$(dirname "$0")/lib.sh"
 ID=91003

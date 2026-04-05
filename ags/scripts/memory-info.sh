@@ -1,5 +1,5 @@
 #!/bin/bash
-# memory-info.sh — Memory info popup for waybar
+# memory-info.sh — Memory info popup
 
 source "$(dirname "$0")/lib.sh"
 ID=91004

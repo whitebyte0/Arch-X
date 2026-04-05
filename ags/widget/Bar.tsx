@@ -222,7 +222,7 @@ GLib.timeout_add(GLib.PRIORITY_DEFAULT, 2000, () => {
   return GLib.SOURCE_CONTINUE
 })
 
-const scriptsDir = `${GLib.get_home_dir()}/.config/waybar/scripts`
+const scriptsDir = `${GLib.get_home_dir()}/.config/ags/scripts`
 
 function SystemMonitors() {
   return (

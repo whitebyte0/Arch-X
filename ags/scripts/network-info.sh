@@ -1,5 +1,5 @@
 #!/bin/bash
-# network-info.sh — curated network info popup for waybar
+# network-info.sh — curated network info popup
 
 source "$(dirname "$0")/lib.sh"
 ID=91001

@@ -1,6 +1,7 @@
 import GLib from "gi://GLib"
 import Notifd from "gi://AstalNotifd?version=0.1"
 import { notifd, shouldAllowNotification, setCurrentNotification, clearCurrentNotification } from "../lib/notifications"
+import { expanded } from "./Bar"
 
 const TIMEOUT_LOW = 8000
 const TIMEOUT_NORMAL = 12000
@@ -23,7 +24,7 @@ function show(n: Notifd.Notification) {
   clearTimer()
   setCurrentNotification(n)
 
-  if (n.urgency !== Notifd.Urgency.CRITICAL) {
+  if (n.urgency !== Notifd.Urgency.CRITICAL && !expanded.peek()) {
     const ms = n.urgency === Notifd.Urgency.LOW ? TIMEOUT_LOW : TIMEOUT_NORMAL
     hideTimer = GLib.timeout_add(GLib.PRIORITY_DEFAULT, ms, () => {
       hide()

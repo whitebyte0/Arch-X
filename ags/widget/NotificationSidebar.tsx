@@ -8,6 +8,7 @@ import {
   notifd,
   focusDismiss,
   filters,
+  removeFilter,
   history,
   dismissNotification,
   clearHistory,
@@ -129,10 +130,17 @@ export default function NotificationSidebar(gdkmonitor: Gdk.Monitor) {
     return len === 0 ? "No notifications" : `${len} notification${len === 1 ? "" : "s"}`
   })
 
+  const [filterOpen, setFilterOpen] = createState(false)
+
   const filterLabel = filters.as((f) => f.length > 0 ? `󰈶 ${f.length}` : "󰈶")
-  const filterClasses = filters.as((f) =>
-    f.length > 0 ? ["filter-indicator", "active"] : ["filter-indicator"]
-  )
+  const filterClasses = createComputed(() => {
+    const f = filters()
+    const open = filterOpen()
+    const cls = ["filter-indicator"]
+    if (f.length > 0) cls.push("active")
+    if (open) cls.push("open")
+    return cls
+  })
 
   // transparent scrim — click to close sidebar
   const scrim = (
@@ -174,7 +182,7 @@ export default function NotificationSidebar(gdkmonitor: Gdk.Monitor) {
         <box cssClasses={["sidebar-header"]}>
           <label label="Notifications" cssClasses={["sidebar-title"]} />
           <box hexpand halign={Gtk.Align.END}>
-            <button cssClasses={filterClasses} cursor={pointer}>
+            <button cssClasses={filterClasses} cursor={pointer} onClicked={() => setFilterOpen(!filterOpen.peek())}>
               <label label={filterLabel} />
             </button>
             <button cssClasses={["clear-all"]} cursor={pointer} onClicked={() => clearHistory()}>
@@ -182,6 +190,44 @@ export default function NotificationSidebar(gdkmonitor: Gdk.Monitor) {
             </button>
           </box>
         </box>
+        <revealer
+          revealChild={filterOpen}
+          transitionType={Gtk.RevealerTransitionType.SLIDE_DOWN}
+          transitionDuration={150}
+        >
+          <box orientation={Gtk.Orientation.VERTICAL} cssClasses={["filter-panel"]}>
+            <For each={filters}>
+              {(rule: any, index: any) => (
+                <box cssClasses={["filter-rule"]}>
+                  <label
+                    label={`${rule.action === "exclude" ? "󰍶" : "󰄬"} --${rule.field}  ${rule.pattern}`}
+                    cssClasses={[`filter-rule-${rule.action}`]}
+                    hexpand
+                    xalign={0}
+                    ellipsize={3}
+                  />
+                  <button
+                    cssClasses={["filter-rule-delete"]}
+                    cursor={pointer}
+                    onClicked={() => {
+                      try { removeFilter(index) } catch {}
+                    }}
+                  >
+                    <label label="󰅖" />
+                  </button>
+                </box>
+              )}
+            </For>
+            <box visible={filters.as((f) => f.length === 0)} cssClasses={["filter-empty"]}>
+              <label label="No filter rules" xalign={0} />
+            </box>
+            <label
+              label="Add via CLI:  notif filter add --app exclude <regex>"
+              cssClasses={["filter-hint"]}
+              xalign={0}
+            />
+          </box>
+        </revealer>
         <Gtk.ScrolledWindow vexpand cssClasses={["sidebar-scroll"]}>
           <box orientation={Gtk.Orientation.VERTICAL} cssClasses={["sidebar-list"]}>
             <For each={history}>

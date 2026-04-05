@@ -78,7 +78,7 @@
         "return-type": "json",
         "interval": 30,
         "signal": 8,
-        "on-click": "ags request dismiss-all"
+        "on-click": "ags request expand-notification"
     },
 
     "custom/power": {

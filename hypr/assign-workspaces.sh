@@ -4,7 +4,7 @@
 # Prompt monitor setup if multiple monitors and no config yet
 LOCAL_DIR="$HOME/.config/hypr-local"
 mkdir -p "$LOCAL_DIR"
-mapfile -t monitors < <(hyprctl monitors -j | jq -r '.[].name')
+mapfile -t monitors < <(hyprctl monitors -j | jq -r 'sort_by(.x) | .[].name')
 count=${#monitors[@]}
 
 if [ "$count" -gt 1 ] && [ ! -f "$LOCAL_DIR/monitors.conf" ]; then

@@ -123,6 +123,31 @@ window.bar-window {
     background: rgba(255, 255, 255, 0.09);
 }
 
+/* ── System Tray ────────────────────────────── */
+
+.system-tray {
+    padding: 0 4px;
+}
+
+.tray-item {
+    padding: 4px;
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    min-width: 24px;
+    min-height: 24px;
+}
+
+.tray-item:hover {
+    background: rgba(255, 255, 255, 0.09);
+}
+
+.bar-separator {
+    background: rgba(255, 255, 255, 0.08);
+    min-width: 1px;
+    margin: 8px 4px;
+}
+
 /* ── Info Panel ────────────────────────────────── */
 
 window.info-scrim {
@@ -139,12 +164,12 @@ window.info-panel {
 }
 
 .info-panel-button:hover .info-panel-container {
-    background: rgba(0, 0, 0, 0.92);
+    background: rgba(0, 0, 0, 0.97);
     border-color: rgba(255, 255, 255, 0.14);
 }
 
 .info-panel-container {
-    background: rgba(0, 0, 0, 0.88);
+    background: rgba(0, 0, 0, 0.95);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
     padding: 16px 20px;
@@ -183,7 +208,7 @@ window.notification-scrim {
 /* ── Notification Sidebar ─────────────────────── */
 
 window.notification-sidebar {
-    background: rgba(0, 0, 0, 0.85);
+    background: rgba(0, 0, 0, 0.95);
     border-left: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -225,12 +250,70 @@ window.notification-sidebar {
     color: #a6e3a1;
 }
 
+.filter-indicator.open {
+    background: rgba(255, 255, 255, 0.12);
+    color: #e0e0e0;
+}
+
+.filter-panel {
+    padding: 8px 16px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.filter-rule {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 4px;
+    padding: 6px 10px;
+    margin-bottom: 4px;
+}
+
+.filter-rule-exclude {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 11px;
+    color: #f38ba8;
+}
+
+.filter-rule-include {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 11px;
+    color: #a6e3a1;
+}
+
+.filter-rule-delete {
+    background: transparent;
+    border: none;
+    color: #808080;
+    font-size: 12px;
+    padding: 2px 6px;
+}
+
+.filter-rule-delete:hover {
+    color: #f38ba8;
+}
+
+.filter-empty {
+    padding: 4px 0;
+}
+
+.filter-empty label {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 11px;
+    color: #6c7086;
+}
+
+.filter-hint {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 10px;
+    color: #585b70;
+    margin-top: 6px;
+}
+
 .sidebar-list {
     padding: 8px;
 }
 
 .notification-item {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.05);
     border-radius: 6px;
     padding: 12px 14px;
     margin-bottom: 8px;
@@ -266,7 +349,7 @@ window.notification-sidebar {
 .notification-item-body {
     font-family: "JetBrainsMono Nerd Font", monospace;
     font-size: 12px;
-    color: #808080;
+    color: #a0a0a0;
     margin-top: 4px;
 }
 

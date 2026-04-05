@@ -31,7 +31,7 @@ step "2/7" "Verifying symlinks..."
 
 mkdir -p "$HOME/.config"
 
-for dir in hypr waybar ghostty wofi ags wlogout nvim gtk-3.0 gtk-4.0; do
+for dir in hypr ghostty wofi ags wlogout nvim gtk-3.0 gtk-4.0; do
     if [ -L "$HOME/.config/$dir" ] && [ "$(readlink -f "$HOME/.config/$dir")" = "$DOTDIR/$dir" ]; then
         info "~/.config/$dir ✓"
     else
@@ -92,7 +92,6 @@ fi
 
 step "4/7" "Setting permissions..."
 
-chmod +x "$DOTDIR/waybar/scripts/"*.sh 2>/dev/null || true
 chmod +x "$DOTDIR/bin/"* 2>/dev/null || true
 info "Scripts ✓"
 
@@ -144,11 +143,9 @@ fi
 # Reload Hyprland config (plugins are loaded above, so hyprexpo:expo dispatcher is valid)
 hyprctl reload 2>/dev/null && info "Hyprland reloaded" || warn "Hyprland not running"
 
-# Restart waybar and AGS
-killall waybar 2>/dev/null || true
+# Restart AGS
 ags quit 2>/dev/null || true
 sleep 0.5
-hyprctl dispatch exec waybar 2>/dev/null && info "Waybar restarted" || warn "Could not restart Waybar (is Hyprland running?)"
 hyprctl dispatch exec "ags run --gtk 4 -d ~/.config/ags/" 2>/dev/null && info "AGS restarted" || warn "Could not restart AGS"
 
 # Ensure swww is running (replaces hyprpaper)

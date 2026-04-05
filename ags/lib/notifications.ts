@@ -8,7 +8,6 @@ GLib.mkdir_with_parents(STATE_DIR, 0o755)
 
 const FOCUS_DISMISS_FILE = STATE_DIR + "/notification-focus-dismiss"
 const FILTERS_FILE = STATE_DIR + "/notification-filters.json"
-const CURRENT_NOTIF_FILE = STATE_DIR + "/notification-current.json"
 
 // ── Notifd singleton ──────────────────────────────
 
@@ -117,26 +116,30 @@ export function shouldAllowNotification(n: Notifd.Notification): boolean {
   return true
 }
 
-// ── Waybar bridge ────────────────────────────────
+// ── Current notification state (reactive) ────────
 
-function signalWaybar(): void {
-  GLib.spawn_command_line_async("pkill -RTMIN+8 waybar")
+export interface CurrentNotification {
+  summary: string
+  body: string
+  urgency: "normal" | "critical" | "low"
+  appName: string
 }
 
+const [currentNotification, _setCurrentNotification] = createState<CurrentNotification | null>(null)
+
+export { currentNotification }
+
 export function setCurrentNotification(n: Notifd.Notification): void {
-  const data = {
+  _setCurrentNotification({
     summary: n.summary || "",
     body: (n.body || "").replace(/<[^>]*>/g, "").replace(/\n/g, " "),
     urgency: n.urgency === Notifd.Urgency.CRITICAL ? "critical" : n.urgency === Notifd.Urgency.LOW ? "low" : "normal",
     appName: n.appName || "",
-  }
-  writeFile(CURRENT_NOTIF_FILE, JSON.stringify(data))
-  signalWaybar()
+  })
 }
 
 export function clearCurrentNotification(): void {
-  writeFile(CURRENT_NOTIF_FILE, "{}")
-  signalWaybar()
+  _setCurrentNotification(null)
 }
 
 // ── Notification history ──────────────────────────

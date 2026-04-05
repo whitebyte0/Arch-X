@@ -1,5 +1,6 @@
 import app from "ags/gtk4/app"
 import style from "./style.css"
+import Bar from "./widget/Bar"
 import { setupNotificationBridge, dismissAll } from "./widget/NotificationBar"
 import NotificationSidebar, { toggleSidebar } from "./widget/NotificationSidebar"
 import InfoPanel, { showInfo, hideInfo } from "./widget/InfoPanel"
@@ -130,6 +131,7 @@ app.start({
     setupNotificationBridge()
 
     const monitors = app.get_monitors()
+    monitors.map(Bar)
     if (monitors.length > 0) {
       NotificationSidebar(monitors[0])
       InfoPanel(monitors[0])

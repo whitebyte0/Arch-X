@@ -1,3 +1,128 @@
+/* ── Status Bar ───────────────────────────────── */
+
+window.bar-spacer {
+    background: transparent;
+}
+
+window.bar-window {
+    background: transparent;
+}
+
+.bar-left-inner,
+.bar-right-inner {
+    background: rgba(0, 0, 0, 0.75);
+    min-height: 34px;
+    max-height: 34px;
+    padding: 0 4px;
+}
+
+.bar-left-inner {
+    border-radius: 0 0 8px 0;
+}
+
+.bar-right-inner {
+    border-radius: 0 0 0 8px;
+}
+
+/* ── Workspaces ──────────────────────────────── */
+
+.workspaces {
+    padding: 0 4px;
+}
+
+.workspace-btn {
+    padding: 0 8px;
+    min-width: 24px;
+    min-height: 34px;
+    color: rgba(220, 220, 220, 0.3);
+    border-radius: 4px;
+    background: transparent;
+    border: none;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.workspace-btn.active {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.workspace-btn.empty {
+    color: rgba(220, 220, 220, 0.15);
+}
+
+.workspace-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: #e0e0e0;
+}
+
+/* ── Center Section ──────────────────────────── */
+
+.center-section {
+    background: rgba(0, 0, 0, 0.75);
+    min-height: 34px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 0 0 8px 8px;
+}
+
+.center-section:hover {
+    background: rgba(0, 0, 0, 0.82);
+}
+
+.center-section.expanded {
+    padding: 10px 20px;
+}
+
+.center-section.urgency-critical {
+    border-bottom: 1px solid rgba(243, 139, 168, 0.3);
+}
+
+/* ── Clock ────────────────────────────────────── */
+
+.clock {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 12px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: #e0e0e0;
+}
+
+/* ── Notification in center ───────────────────── */
+
+.notif-text {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 12px;
+    font-weight: bold;
+    color: #e0e0e0;
+}
+
+.center-section.urgency-critical .notif-text {
+    color: #f38ba8;
+}
+
+.center-section.urgency-low .notif-text {
+    color: #808080;
+}
+
+/* ── Bar modules (right section) ──────────────── */
+
+.bar-module {
+    padding: 0 10px;
+    margin: 4px 2px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 12px;
+    color: #e0e0e0;
+}
+
+.bar-module:hover {
+    background: rgba(255, 255, 255, 0.09);
+}
+
 /* ── Info Panel ────────────────────────────────── */
 
 window.info-scrim {

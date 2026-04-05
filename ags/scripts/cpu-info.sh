@@ -1,19 +1,37 @@
 #!/bin/bash
-# cpu-info.sh — CPU info popup
+# cpu-info.sh — CPU info popup (data gathering based on github.com/Szerwigi1410/cpuinfo)
 
 source "$(dirname "$0")/lib.sh"
-ID=91003
 
 msg=""
 
+# ── Model ──
+cpu_name=$(grep -m 1 'model name' /proc/cpuinfo | awk -F: '{print $2}' | xargs)
+brand=$(lscpu | grep -Eio 'intel|amd' | head -1)
+msg+="$(section "$GREEN" '  CPU')  ${cpu_name:-Unknown}\n"
+
+# ── Cores + Threads ──
+cores=$(lscpu | grep 'Core(s) per socket' | awk -F: '{print $2}' | xargs)
+threads=$(nproc)
+tpc=$(lscpu | grep 'Thread(s) per core' | awk -F: '{print $2}' | xargs)
+msg+="$(section "$BLUE" '  Cores')  $cores cores, $threads threads ($tpc per core)\n"
+
+# ── Frequency ──
+cur_mhz=$(lscpu | grep 'CPU MHz' | awk -F: '{print $2}' | xargs | sed 's/\.[0]*$//')
+min_mhz=$(lscpu | grep 'CPU min MHz' | awk -F: '{print $2}' | xargs | sed 's/\.[0]*$//')
+max_mhz=$(lscpu | grep 'CPU max MHz' | awk -F: '{print $2}' | xargs | sed 's/\.[0]*$//')
+[ -z "$cur_mhz" ] && cur_mhz=$(awk '{print int($1/1000)}' /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq 2>/dev/null)
+msg+="$(section "$BLUE" '  Freq')  ${cur_mhz:-?} MHz  (${min_mhz:-?} - ${max_mhz:-?})\n"
+
+# ── Cache ──
+l1d=$(lscpu | grep 'L1d' | awk -F: '{print $2}' | xargs | head -1)
+l2=$(lscpu | grep 'L2' | awk -F: '{print $2}' | xargs)
+l3=$(lscpu | grep 'L3' | awk -F: '{print $2}' | xargs)
+msg+="$(section "$BLUE" '  Cache')  L1d: $l1d  L2: $l2  L3: $l3\n"
+
 # ── Load average ──
 read -r one five fifteen _ < /proc/loadavg
-msg+="$(section "$GREEN" '  Load')  $one  $five  $fifteen\n"
-
-# ── Cores + frequency ──
-cores=$(nproc)
-freq=$(awk '/cpu MHz/{sum+=$4; n++} END{if(n>0) printf "%.0f", sum/n}' /proc/cpuinfo)
-msg+="$(section "$BLUE" '  Cores')  $cores @ ${freq} MHz\n"
+msg+="$(section "$YELLOW" '  Load')  $one  $five  $fifteen\n"
 
 # ── Top 5 by CPU ──
 msg+="$(section "$YELLOW" '  Top Processes')\n"

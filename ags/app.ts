@@ -1,6 +1,6 @@
 import app from "ags/gtk4/app"
 import style from "./style.css"
-import Bar, { toggleExpand } from "./widget/Bar"
+import Bar, { toggleExpand, setRecording } from "./widget/Bar"
 import { setupNotificationBridge, dismissAll } from "./widget/NotificationBar"
 import NotificationSidebar, { toggleSidebar } from "./widget/NotificationSidebar"
 import InfoPanel, { showInfo, hideInfo } from "./widget/InfoPanel"
@@ -38,6 +38,11 @@ app.start({
       case "toggle-expand":
         toggleExpand()
         res("toggled")
+        break
+
+      case "recording":
+        setRecording(args[1] === "on")
+        res(args[1] === "on" ? "recording" : "stopped")
         break
 
       case "clear":

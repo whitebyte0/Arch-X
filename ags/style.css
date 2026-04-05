@@ -12,7 +12,6 @@ window.bar-window {
 .bar-right-inner {
     background: rgba(0, 0, 0, 0.75);
     min-height: 34px;
-    max-height: 34px;
     padding: 0 4px;
 }
 
@@ -123,6 +122,16 @@ window.bar-window {
     background: rgba(255, 255, 255, 0.09);
 }
 
+.bar-module.recording {
+    background: rgba(243, 139, 168, 0.15);
+    color: #f38ba8;
+    font-size: 16px;
+}
+
+.bar-module.recording:hover {
+    background: rgba(243, 139, 168, 0.25);
+}
+
 /* ── System Tray ────────────────────────────── */
 
 .system-tray {
@@ -140,12 +149,6 @@ window.bar-window {
 
 .tray-item:hover {
     background: rgba(255, 255, 255, 0.09);
-}
-
-.bar-separator {
-    background: rgba(255, 255, 255, 0.08);
-    min-width: 1px;
-    margin: 8px 4px;
 }
 
 /* ── Info Panel ────────────────────────────────── */

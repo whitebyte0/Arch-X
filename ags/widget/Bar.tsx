@@ -222,6 +222,27 @@ GLib.timeout_add(GLib.PRIORITY_DEFAULT, 2000, () => {
   return GLib.SOURCE_CONTINUE
 })
 
+// ── Recording Indicator ──────────────────────────
+
+export const [recording, setRecording] = createState(false)
+
+GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, () => {
+  try {
+    const [ok, out] = GLib.spawn_command_line_sync("pgrep wf-recorder")
+    setRecording(ok && out && out.length > 0)
+  } catch { setRecording(false) }
+  return GLib.SOURCE_CONTINUE
+})
+
+function RecordingIndicator() {
+  return (
+    <button visible={recording} cssClasses={["bar-module", "recording"]}
+      onClicked={() => GLib.spawn_command_line_async("pkill wf-recorder")}>
+      <label label="⏺" />
+    </button>
+  )
+}
+
 const scriptsDir = `${GLib.get_home_dir()}/.config/ags/scripts`
 
 function SystemMonitors() {
@@ -355,7 +376,6 @@ function SystemTray() {
 
 export const [expanded, setExpanded] = createState(false)
 const [collapsing, setCollapsing] = createState(false)
-const centerWindows: Gtk.Window[] = []
 
 export function toggleExpand() {
   if (!currentNotification.peek()) return
@@ -364,13 +384,10 @@ export function toggleExpand() {
 }
 
 function collapse() {
-  setCollapsing(true)   // switch revealer to 0ms duration
-  setExpanded(false)    // instant close (no animation frames = no reflow blink)
-  for (const win of centerWindows) {
-    try { win.set_default_size(-1, 34) } catch {}
-  }
+  setCollapsing(true)
+  setExpanded(false)
   GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-    setCollapsing(false) // restore 200ms for next expand
+    setCollapsing(false)
     return GLib.SOURCE_REMOVE
   })
 }
@@ -486,78 +503,48 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
 
   Gtk4LayerShell.set_exclusive_zone(spacer, 34)
 
-  // Left window — workspaces
-  const leftWin = (
+  // Main bar — single full-width window with CenterBox
+  const bar = (
     <window
       visible
-      name={`bar-left-${id}`}
-      namespace="bar-left"
+      name={`bar-${id}`}
+      namespace="bar"
       cssClasses={["bar-window"]}
       gdkmonitor={gdkmonitor}
-      anchor={TOP | LEFT}
+      anchor={TOP | LEFT | RIGHT}
       exclusivity={Astal.Exclusivity.IGNORE}
       layer={Astal.Layer.TOP}
       application={app}
     >
-      <box cssClasses={["bar-left-inner"]} heightRequest={34}>
-        {Workspaces(wsIds)}
-      </box>
+      <centerbox
+        startWidget={
+          <box cssClasses={["bar-left-inner"]} heightRequest={34}>
+            {Workspaces(wsIds)}
+            <SystemTray />
+            <RecordingIndicator />
+          </box>
+        }
+        centerWidget={<Center />}
+        endWidget={
+          <box cssClasses={["bar-right-inner"]} heightRequest={34} halign={Gtk.Align.END}>
+            <SystemMonitors />
+            <NetworkModule />
+            <BluetoothModule />
+            <Language />
+            <Audio />
+            <button
+              cssClasses={["bar-module"]}
+              onClicked={() => GLib.spawn_command_line_async(
+                `wlogout --layout ${GLib.get_home_dir()}/.config/wlogout/layout --css ${GLib.get_home_dir()}/.config/wlogout/style.css -b 4 -r 1`
+              )}
+            >
+              <label label="󰐥" />
+            </button>
+          </box>
+        }
+      />
     </window>
   )
 
-  // Center window — clock/notification/expand, can grow freely
-  const centerWin = (
-    <window
-      visible
-      name={`bar-center-${id}`}
-      namespace="bar-center"
-      cssClasses={["bar-window"]}
-      gdkmonitor={gdkmonitor}
-      anchor={TOP}
-      exclusivity={Astal.Exclusivity.IGNORE}
-      layer={Astal.Layer.TOP}
-      application={app}
-    >
-      <Center />
-    </window>
-  ) as Gtk.Window
-
-  // Force window to always shrink-wrap to content
-  centerWin.set_default_size(-1, 34)
-  centerWindows.push(centerWin)
-
-  // Right window — audio, fixed 34px
-  const rightWin = (
-    <window
-      visible
-      name={`bar-right-${id}`}
-      namespace="bar-right"
-      cssClasses={["bar-window"]}
-      gdkmonitor={gdkmonitor}
-      anchor={TOP | RIGHT}
-      exclusivity={Astal.Exclusivity.IGNORE}
-      layer={Astal.Layer.TOP}
-      application={app}
-    >
-      <box cssClasses={["bar-right-inner"]} heightRequest={34}>
-        <SystemTray />
-        <box cssClasses={["bar-separator"]} />
-        <SystemMonitors />
-        <NetworkModule />
-        <BluetoothModule />
-        <Language />
-        <Audio />
-        <button
-          cssClasses={["bar-module"]}
-          onClicked={() => GLib.spawn_command_line_async(
-            `wlogout --layout ${GLib.get_home_dir()}/.config/wlogout/layout --css ${GLib.get_home_dir()}/.config/wlogout/style.css -b 4 -r 1`
-          )}
-        >
-          <label label="󰐥" />
-        </button>
-      </box>
-    </window>
-  )
-
-  return [spacer, leftWin, centerWin, rightWin]
+  return [spacer, bar]
 }

@@ -65,5 +65,4 @@ else
     msg+="  <span color='${DIM}'>none</span>\n"
 fi
 
-rendered=$(echo -e "$msg")
-ags request info Network "$rendered" 2>/dev/null || notify-send -t 12000 "Network" "$msg"
+notify-send -a system -t 15000 "Network" "$(echo -e "$msg")"

@@ -210,7 +210,7 @@ export default function NotificationSidebar(gdkmonitor: Gdk.Monitor) {
                     cssClasses={["filter-rule-delete"]}
                     cursor={pointer}
                     onClicked={() => {
-                      try { removeFilter(index) } catch {}
+                      try { removeFilter(index()) } catch {}
                     }}
                   >
                     <label label="󰅖" />

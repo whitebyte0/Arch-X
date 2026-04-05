@@ -119,6 +119,7 @@ export function shouldAllowNotification(n: Notifd.Notification): boolean {
 // ── Current notification state (reactive) ────────
 
 export interface CurrentNotification {
+  id: number
   summary: string
   body: string
   urgency: "normal" | "critical" | "low"
@@ -131,8 +132,9 @@ export { currentNotification }
 
 export function setCurrentNotification(n: Notifd.Notification): void {
   _setCurrentNotification({
+    id: n.id,
     summary: n.summary || "",
-    body: (n.body || "").replace(/<[^>]*>/g, "").replace(/\n/g, " "),
+    body: (n.body || "").replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"").replace(/&#39;/g, "'"),
     urgency: n.urgency === Notifd.Urgency.CRITICAL ? "critical" : n.urgency === Notifd.Urgency.LOW ? "low" : "normal",
     appName: n.appName || "",
   })
@@ -181,7 +183,8 @@ export function recordNotification(n: Notifd.Notification): boolean {
     actions,
   }
 
-  const updated = [entry, ...history.peek()]
+  const filtered = history.peek().filter(e => e.id !== n.id)
+  const updated = [entry, ...filtered]
   setHistory(updated.length > 200 ? updated.slice(0, 200) : updated)
   return true
 }

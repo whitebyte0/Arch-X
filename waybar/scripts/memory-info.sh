@@ -27,5 +27,4 @@ top_procs=$(ps aux --sort=-%mem --no-headers | head -5 | awk '{
 }' | sanitize)
 msg+="$top_procs\n"
 
-rendered=$(echo -e "$msg")
-ags request info Memory "$rendered" 2>/dev/null || notify-send -t 10000 "Memory" "$msg"
+notify-send -a system -t 15000 "Memory" "$(echo -e "$msg")"

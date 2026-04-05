@@ -89,6 +89,8 @@ function Clock() {
 
 function Audio() {
   const [volumeLabel, setVolumeLabel] = createState("󰕾 --")
+  let prevSpeaker: any = null
+  let speakerHandlers: number[] = []
 
   const update = () => {
     const s = audio.get_default_speaker()
@@ -97,21 +99,20 @@ function Audio() {
     else setVolumeLabel(`󰕾 ${Math.round(s.get_volume() * 100)}%`)
   }
 
-  audio.connect("notify::default-speaker", () => {
-    update()
+  const connectSpeaker = () => {
+    if (prevSpeaker) speakerHandlers.forEach(id => prevSpeaker.disconnect(id))
+    speakerHandlers = []
     const s = audio.get_default_speaker()
     if (s) {
-      s.connect("notify::volume", update)
-      s.connect("notify::mute", update)
+      speakerHandlers.push(s.connect("notify::volume", update))
+      speakerHandlers.push(s.connect("notify::mute", update))
+      prevSpeaker = s
     }
-  })
-
-  const s = audio.get_default_speaker()
-  if (s) {
-    s.connect("notify::volume", update)
-    s.connect("notify::mute", update)
+    update()
   }
-  update()
+
+  audio.connect("notify::default-speaker", connectSpeaker)
+  connectSpeaker()
 
   return (
     <button
@@ -197,7 +198,7 @@ GLib.timeout_add(GLib.PRIORITY_DEFAULT, 2000, () => {
     const parts = statLine.split(/\s+/).slice(1).map(Number)
     const idle = parts[3] + (parts[4] || 0)
     const total = parts.reduce((a, b) => a + b, 0)
-    if (prevTotal > 0) {
+    if (prevTotal > 0 && total !== prevTotal) {
       const usage = 100 * (1 - (idle - prevIdle) / (total - prevTotal))
       setCpuLabel(`󰻠 ${Math.round(usage)}%`)
     }
@@ -221,12 +222,20 @@ GLib.timeout_add(GLib.PRIORITY_DEFAULT, 2000, () => {
   return GLib.SOURCE_CONTINUE
 })
 
+const scriptsDir = `${GLib.get_home_dir()}/.config/waybar/scripts`
+
 function SystemMonitors() {
   return (
     <box>
-      <label label={cpuLabel} cssClasses={["bar-module"]} />
-      <label label={memLabel} cssClasses={["bar-module"]} />
-      <label label={tempLabel} cssClasses={["bar-module"]} />
+      <button cssClasses={["bar-module"]} onClicked={() => GLib.spawn_command_line_async(`${scriptsDir}/cpu-info.sh`)}>
+        <label label={cpuLabel} />
+      </button>
+      <button cssClasses={["bar-module"]} onClicked={() => GLib.spawn_command_line_async(`${scriptsDir}/memory-info.sh`)}>
+        <label label={memLabel} />
+      </button>
+      <button cssClasses={["bar-module"]} onClicked={() => GLib.spawn_command_line_async(`${scriptsDir}/temp-info.sh`)}>
+        <label label={tempLabel} />
+      </button>
     </box>
   )
 }
@@ -255,7 +264,11 @@ function NetworkModule() {
   update()
   GLib.timeout_add(GLib.PRIORITY_DEFAULT, 5000, () => { update(); return GLib.SOURCE_CONTINUE })
 
-  return <label label={netLabel} cssClasses={["bar-module"]} />
+  return (
+    <button cssClasses={["bar-module"]} onClicked={() => GLib.spawn_command_line_async(`${scriptsDir}/network-info.sh`)}>
+      <label label={netLabel} />
+    </button>
+  )
 }
 
 // ── Bluetooth ───────────────────────────────────
@@ -318,6 +331,7 @@ function SystemTray() {
                 if (menu) {
                   const popover = new Gtk.PopoverMenu({ menuModel: menu })
                   popover.set_parent(self)
+                  popover.connect("closed", () => popover.unparent())
                   popover.popup()
                 } else {
                   item.secondary_activate(Math.round(x), Math.round(y))
@@ -352,7 +366,9 @@ export function toggleExpand() {
 function collapse() {
   setCollapsing(true)   // switch revealer to 0ms duration
   setExpanded(false)    // instant close (no animation frames = no reflow blink)
-  for (const win of centerWindows) win.set_default_size(-1, 34)
+  for (const win of centerWindows) {
+    try { win.set_default_size(-1, 34) } catch {}
+  }
   GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
     setCollapsing(false) // restore 200ms for next expand
     return GLib.SOURCE_REMOVE
@@ -371,19 +387,25 @@ function Center() {
     return notif.body ? `${notif.summary}  ${notif.body}` : notif.summary
   })
 
+  const flatText = createComputed(() => fullText().replace(/\n/g, " "))
+
   const previewText = createComputed(() => {
-    const text = fullText()
+    const text = flatText()
     if (text.length <= 80) return text
     return expanded() ? text.slice(0, 80) : text.slice(0, 77) + "..."
   })
 
-  // The remaining text that didn't fit in the preview
   const remainingText = createComputed(() => {
-    const text = fullText()
+    const notif = currentNotification()
+    if (!notif) return ""
+    // For multiline bodies, show full body when expanded
+    if (notif.body && notif.body.includes("\n")) return notif.body
+    // For single-line, show the overflow past 80 chars
+    const text = flatText()
     return text.length > 80 ? text.slice(80) : ""
   })
 
-  const hasRemaining = createComputed(() => remainingText() !== "")
+  const hasRemaining = createComputed(() => remainingText() !== "" || flatText().length > 80)
 
   const hasNotif = currentNotification.as((n) => n !== null)
   const showClock = currentNotification.as((n) => n === null)

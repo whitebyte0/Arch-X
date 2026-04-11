@@ -383,11 +383,23 @@ export function toggleExpand() {
   else setExpanded(true)
 }
 
+const barWindows: Gtk.Window[] = []
+
 function collapse() {
   setCollapsing(true)
   setExpanded(false)
-  GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+  
+  for (const win of barWindows) {
+    // Force the window to 34px immediately to match the collapsed state
+    win.set_size_request(-1, 34) 
+  }
+
+  GLib.timeout_add(GLib.PRIORITY_DEFAULT, 250, () => {
     setCollapsing(false)
+    // After animation, we reset size request to -1 so it's allowed to grow next time
+    for (const win of barWindows) {
+        win.set_size_request(-1, -1) 
+    }
     return GLib.SOURCE_REMOVE
   })
 }
@@ -516,35 +528,37 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
       layer={Astal.Layer.TOP}
       application={app}
     >
-      <centerbox
+      <centerbox valign={Gtk.Align.START}
         startWidget={
-          <box cssClasses={["bar-left-inner"]} heightRequest={34}>
-            {Workspaces(wsIds)}
-            <SystemTray />
-            <RecordingIndicator />
-          </box>
-        }
-        centerWidget={<Center />}
-        endWidget={
-          <box cssClasses={["bar-right-inner"]} heightRequest={34} halign={Gtk.Align.END}>
-            <SystemMonitors />
-            <NetworkModule />
-            <BluetoothModule />
-            <Language />
-            <Audio />
-            <button
-              cssClasses={["bar-module"]}
-              onClicked={() => GLib.spawn_command_line_async(
-                `wlogout --layout ${GLib.get_home_dir()}/.config/wlogout/layout --css ${GLib.get_home_dir()}/.config/wlogout/style.css -b 4 -r 1`
-              )}
-            >
-              <label label="󰐥" />
-            </button>
-          </box>
-        }
-      />
+          <box cssClasses={["bar-left-inner"]} heightRequest={34} valign={Gtk.Align.START}>
+              {Workspaces(wsIds)}
+              <SystemTray />
+              <RecordingIndicator />
+            </box>
+          }
+          centerWidget={<Center />}
+          endWidget={
+            <box cssClasses={["bar-right-inner"]} heightRequest={34} halign={Gtk.Align.END} valign={Gtk.Align.START}>
+              <SystemMonitors />
+              <NetworkModule />
+              <BluetoothModule />
+              <Language />
+              <Audio />
+              <button
+                cssClasses={["bar-module"]}
+                onClicked={() => GLib.spawn_command_line_async(
+                  `wlogout --layout ${GLib.get_home_dir()}/.config/wlogout/layout --css ${GLib.get_home_dir()}/.config/wlogout/style.css -b 4 -r 1`
+                )}
+              >
+                <label label="󰐥" />
+              </button>
+            </box>
+          }
+        />
     </window>
-  )
+  ) as Gtk.Window
+
+  barWindows.push(bar)
 
   return [spacer, bar]
 }

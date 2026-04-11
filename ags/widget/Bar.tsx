@@ -375,28 +375,14 @@ function SystemTray() {
 // ── Center (clock + notification + expand) ───────
 
 export const [expanded, setExpanded] = createState(false)
-const [collapsing, setCollapsing] = createState(false)
 
 export function toggleExpand() {
   if (!currentNotification.peek()) return
-  if (expanded.peek()) {
-    collapse()
-  } else {
-    for (const win of barWindows) win.set_size_request(-1, -1)
-    setExpanded(true)
-  }
+  setExpanded(!expanded.peek())
 }
 
-const barWindows: Gtk.Window[] = []
-
 function collapse() {
-  setCollapsing(true)
   setExpanded(false)
-  for (const win of barWindows) win.set_size_request(-1, 34)
-  GLib.timeout_add(GLib.PRIORITY_DEFAULT, 250, () => {
-    setCollapsing(false)
-    return GLib.SOURCE_REMOVE
-  })
 }
 
 // Auto-collapse when notification clears
@@ -404,35 +390,30 @@ currentNotification.subscribe(() => {
   if (!currentNotification.peek()) collapse()
 })
 
+// Notification text — module scope so overlay can access
+const fullText = createComputed(() => {
+  const notif = currentNotification()
+  if (!notif) return ""
+  return notif.body ? `${notif.summary}  ${notif.body}` : notif.summary
+})
+
+const flatText = createComputed(() => fullText().replace(/\n/g, " "))
+
+const expandedBody = createComputed(() => {
+  const text = fullText()
+  return text.length > 80 ? text.slice(80) : ""
+})
+
+const hasNotif = currentNotification.as((n) => n !== null)
+const showClock = currentNotification.as((n) => n === null)
+
+// Center section in bar — always 34px, preview only
 function Center() {
-  const fullText = createComputed(() => {
-    const notif = currentNotification()
-    if (!notif) return ""
-    return notif.body ? `${notif.summary}  ${notif.body}` : notif.summary
-  })
-
-  const flatText = createComputed(() => fullText().replace(/\n/g, " "))
-
   const previewText = createComputed(() => {
     const text = flatText()
     if (text.length <= 80) return text
     return expanded() ? text.slice(0, 80) : text.slice(0, 77) + "..."
   })
-
-  const remainingText = createComputed(() => {
-    const notif = currentNotification()
-    if (!notif) return ""
-    // For multiline bodies, show full body when expanded
-    if (notif.body && notif.body.includes("\n")) return notif.body
-    // For single-line, show the overflow past 80 chars
-    const text = flatText()
-    return text.length > 80 ? text.slice(80) : ""
-  })
-
-  const hasRemaining = createComputed(() => remainingText() !== "" || flatText().length > 80)
-
-  const hasNotif = currentNotification.as((n) => n !== null)
-  const showClock = currentNotification.as((n) => n === null)
 
   const centerClasses = createComputed(() => {
     const notif = currentNotification()
@@ -454,32 +435,52 @@ function Center() {
         self.add_controller(rc)
       }}
     >
-      <box orientation={Gtk.Orientation.VERTICAL} valign={Gtk.Align.CENTER}>
-        {/* Clock */}
+      <box>
         <box visible={showClock} halign={Gtk.Align.CENTER}>
           <Clock />
         </box>
-        {/* Notification preview — always visible */}
         <box visible={hasNotif}>
           <label label={previewText} cssClasses={["notif-text"]} ellipsize={3} />
         </box>
-        {/* Continuation text — slides down below preview */}
-        <revealer
-          revealChild={createComputed(() => expanded() && hasRemaining())}
-          transitionType={Gtk.RevealerTransitionType.SLIDE_DOWN}
-          transitionDuration={collapsing.as((c) => c ? 0 : 200)}
-        >
-          <label
-            label={remainingText}
-            cssClasses={["notif-text"]}
-            wrap
-            maxWidthChars={80}
-            xalign={0}
-          />
-        </revealer>
       </box>
     </button>
     </box>
+  )
+}
+
+// Expanded notification overlay — drops down below bar center
+function ExpandedOverlay(gdkmonitor: Gdk.Monitor, id: number) {
+  return (
+    <window
+      visible={expanded}
+      name={`bar-expand-${id}`}
+      namespace="bar-expand"
+      cssClasses={["bar-expand"]}
+      gdkmonitor={gdkmonitor}
+      anchor={Astal.WindowAnchor.TOP}
+      exclusivity={Astal.Exclusivity.NORMAL}
+      layer={Astal.Layer.TOP}
+      application={app}
+      marginTop={0}
+    >
+      <button
+        cssClasses={["expanded-body"]}
+        onClicked={() => collapse()}
+        $={(self: Gtk.Widget) => {
+          const rc = new Gtk.GestureClick({ button: 3 })
+          rc.connect("released", () => dismissAll())
+          self.add_controller(rc)
+        }}
+      >
+        <label
+          label={expandedBody}
+          cssClasses={["notif-text"]}
+          wrap
+          maxWidthChars={80}
+          xalign={0}
+        />
+      </button>
+    </window>
   )
 }
 
@@ -491,24 +492,6 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
   const wsIds = getMonitorWorkspaces(gdkmonitor)
   const id = barIndex++
   const { TOP, LEFT, RIGHT } = Astal.WindowAnchor
-
-  // Invisible spacer — full width, reserves 34px exclusive zone
-  const spacer = (
-    <window
-      visible
-      name={`bar-spacer-${id}`}
-      namespace="bar-spacer"
-      cssClasses={["bar-spacer"]}
-      gdkmonitor={gdkmonitor}
-      anchor={TOP | LEFT | RIGHT}
-      layer={Astal.Layer.BOTTOM}
-      application={app}
-    >
-      <box />
-    </window>
-  ) as Gtk.Window
-
-  Gtk4LayerShell.set_exclusive_zone(spacer, 34)
 
   // Main bar — single full-width window with CenterBox
   const bar = (
@@ -554,7 +537,9 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
   ) as Gtk.Window
 
   bar.set_size_request(-1, 34)
-  barWindows.push(bar)
+  Gtk4LayerShell.set_exclusive_zone(bar, 34)
 
-  return [spacer, bar]
+  const expandedWin = ExpandedOverlay(gdkmonitor, id)
+
+  return [bar, expandedWin]
 }

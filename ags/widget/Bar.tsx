@@ -379,8 +379,12 @@ const [collapsing, setCollapsing] = createState(false)
 
 export function toggleExpand() {
   if (!currentNotification.peek()) return
-  if (expanded.peek()) collapse()
-  else setExpanded(true)
+  if (expanded.peek()) {
+    collapse()
+  } else {
+    for (const win of barWindows) win.set_size_request(-1, -1)
+    setExpanded(true)
+  }
 }
 
 const barWindows: Gtk.Window[] = []
@@ -388,18 +392,9 @@ const barWindows: Gtk.Window[] = []
 function collapse() {
   setCollapsing(true)
   setExpanded(false)
-  
-  for (const win of barWindows) {
-    // Force the window to 34px immediately to match the collapsed state
-    win.set_size_request(-1, 34) 
-  }
-
+  for (const win of barWindows) win.set_size_request(-1, 34)
   GLib.timeout_add(GLib.PRIORITY_DEFAULT, 250, () => {
     setCollapsing(false)
-    // After animation, we reset size request to -1 so it's allowed to grow next time
-    for (const win of barWindows) {
-        win.set_size_request(-1, -1) 
-    }
     return GLib.SOURCE_REMOVE
   })
 }
@@ -558,6 +553,7 @@ export default function Bar(gdkmonitor: Gdk.Monitor) {
     </window>
   ) as Gtk.Window
 
+  bar.set_size_request(-1, 34)
   barWindows.push(bar)
 
   return [spacer, bar]

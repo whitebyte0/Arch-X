@@ -363,6 +363,8 @@ function SystemTray() {
           >
             {item.get_gicon()
               ? <image gicon={item.get_gicon()} iconSize={Gtk.IconSize.NORMAL} />
+              : item.get_icon_name()
+              ? <image iconName={item.get_icon_name()} iconSize={Gtk.IconSize.NORMAL} />
               : <label label={item.get_title() || "?"} />
             }
           </button>

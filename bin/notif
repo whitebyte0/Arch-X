@@ -67,6 +67,14 @@ case "${1:-status}" in
                     echo "Usage: notif filter add --app|--summary|--body|--all exclude|include <regex>"
                     exit 1
                 fi
+                case "$action" in
+                    exclude|include) ;;
+                    *)
+                        echo "Invalid action '$action' (expected 'exclude' or 'include')"
+                        echo "Usage: notif filter add --app|--summary|--body|--all exclude|include <regex>"
+                        exit 1
+                        ;;
+                esac
                 result=$(ags request filter add "$field" "$action" "$pattern" 2>/dev/null)
                 echo "${result:-AGS not running}"
                 ;;

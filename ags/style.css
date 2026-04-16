@@ -66,6 +66,13 @@ window.bar-window {
     border-radius: 0 0 8px 8px;
 }
 
+/* Widen only when a notification is active (urgency class is present) */
+.center-section.urgency-low,
+.center-section.urgency-normal,
+.center-section.urgency-critical {
+    min-width: 572px;
+}
+
 .center-section:hover {
     background: rgba(0, 0, 0, 0.82);
 }
@@ -83,6 +90,7 @@ window.bar-expand {
 
 .expanded-body {
     background: rgba(0, 0, 0, 0.75);
+    min-width: 572px;
     padding: 0px 14px 10px;
     border: none;
     border-radius: 0 0 8px 8px;

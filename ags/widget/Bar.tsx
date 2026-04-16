@@ -430,6 +430,7 @@ function Center() {
     <box halign={Gtk.Align.CENTER}>
     <button
       cssClasses={centerClasses}
+      widthRequest={hasNotif.as((n) => (n ? 600 : -1))}
       onClicked={() => toggleExpand()}
       $={(self: Gtk.Widget) => {
         const rc = new Gtk.GestureClick({ button: 3 })
@@ -467,6 +468,7 @@ function ExpandedOverlay(gdkmonitor: Gdk.Monitor, id: number) {
     >
       <button
         cssClasses={["expanded-body"]}
+        widthRequest={600}
         onClicked={() => collapse()}
         $={(self: Gtk.Widget) => {
           const rc = new Gtk.GestureClick({ button: 3 })
